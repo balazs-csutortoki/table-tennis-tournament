@@ -1,0 +1,41 @@
+{
+  "tournament": "Torna",
+  "settings": {
+    "concurrentMatches": "Párhuzamos mérkőzések",
+    "categories": "Kategóriák",
+    "addCategory": "Kategória hozzáadása",
+    "removeCategory": "Kategória eltávolítása"
+  },
+  "contestant": {
+    "registration": "Versenyző regisztráció",
+    "name": "Név",
+    "selectCategory": "Kategória kiválasztása",
+    "registeredContestants": "Regisztrált versenyzők"
+  },
+  "match": {
+    "scheduling": "Mérkőzés ütemezés",
+    "ongoingMatches": "Folyamatban lévő mérkőzések",
+    "upcomingMatches": "Következő mérkőzések",
+    "determineWinner": "Győztes meghatározása"
+  },
+  "rankings": {
+    "currentRankings": "Jelenlegi rangsor",
+    "points": "Pontok",
+    "groupByCategory": "Kategória szerinti csoportosítás"
+  },
+  "dataExport": {
+    "exportData": "Adatok exportálása",
+    "exportFormat": "Exportálási formátum"
+  },
+  "homePage": {
+    "welcome": "Üdvözöljük a Torna Menedzserben",
+    "navigateToSettings": "Navigálás a beállításokhoz",
+    "navigateToTournament": "Navigálás a torna oldalra"
+  },
+  "tournamentPage": {
+    "tournamentDetails": "Torna részletei"
+  },
+  "settingsPage": {
+    "configureSettings": "Beállítások konfigurálása"
+  }
+}
