@@ -1,10 +1,10 @@
 {
   "files": {
-    "main.js": "/table-tennis-tournament/static/js/main.17495135.js",
+    "main.js": "/table-tennis-tournament/static/js/main.c0622e92.js",
     "index.html": "/table-tennis-tournament/index.html",
-    "main.17495135.js.map": "/table-tennis-tournament/static/js/main.17495135.js.map"
+    "main.c0622e92.js.map": "/table-tennis-tournament/static/js/main.c0622e92.js.map"
   },
   "entrypoints": [
-    "static/js/main.17495135.js"
+    "static/js/main.c0622e92.js"
   ]
 }
