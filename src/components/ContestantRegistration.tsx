@@ -1,19 +1,31 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSettingsContext } from '../context/SettingsContext';
+import { generateGUID } from '../utils'; // Import the GUID generator
+import MatchScheduling from './MatchScheduling';
 
-const ContestantRegistration: React.FC = () => {
+interface ContestantRegistrationProps {
+    onCanStartTournamentChange?: (canStart: boolean) => void;
+}
+
+const ContestantRegistration: React.FC<ContestantRegistrationProps> = ({ onCanStartTournamentChange }) => {
     const { categories, contestants, setContestants } = useSettingsContext();
-    const [contestantName, setContestantName] = useState('');
+
+    // List of random first names
+    const randomNames = ['John', 'Jane', 'Alice', 'Bob', 'Charlie', 'Diana', 'Eve', 'Frank', 'Grace', 'Hank'];
+
+    // State for contestant name and category
+    const [contestantName, setContestantName] = useState(randomNames[Math.floor(Math.random() * randomNames.length)]);
     const [category, setCategory] = useState('');
-    const [editingIndex, setEditingIndex] = useState<number | null>(null);
+    const [editingId, setEditingId] = useState<string | null>(null); // Use GUID for editing
 
     const handleRegister = (e: React.FormEvent) => {
         e.preventDefault();
         if (contestantName && category) {
+            // Check if the name is already registered across all categories
             const isDuplicate = contestants.some(
-                (contestant, index) =>
+                (contestant) =>
                     contestant.name.toLowerCase() === contestantName.toLowerCase() &&
-                    index !== editingIndex
+                    contestant.id !== editingId // Exclude the currently edited contestant
             );
 
             if (isDuplicate) {
@@ -21,29 +33,75 @@ const ContestantRegistration: React.FC = () => {
                 return;
             }
 
-            if (editingIndex !== null) {
-                const updatedContestants = [...contestants];
-                updatedContestants[editingIndex] = { name: contestantName, category };
+            if (editingId !== null) {
+                // Update the contestant with the matching ID
+                const updatedContestants = contestants.map((contestant) =>
+                    contestant.id === editingId
+                        ? { ...contestant, name: contestantName, category }
+                        : contestant
+                );
                 setContestants(updatedContestants);
-                setEditingIndex(null);
+                setEditingId(null);
             } else {
-                setContestants([...contestants, { name: contestantName, category }]);
+                // Add a new contestant with a GUID
+                setContestants([...contestants, { id: generateGUID(), name: contestantName, category }]);
             }
 
-            setContestantName('');
-            setCategory('');
+            // Reset the form with a new random name
+            setContestantName(randomNames[Math.floor(Math.random() * randomNames.length)] + '-' + Math.floor(Math.random() * 100));
+            // setCategory('');
         }
     };
 
-    const handleEdit = (index: number) => {
-        setEditingIndex(index);
-        setContestantName(contestants[index].name);
-        setCategory(contestants[index].category);
+    const handleEdit = (id: string) => {
+        const contestantToEdit = contestants.find((contestant) => contestant.id === id);
+        if (contestantToEdit) {
+            setEditingId(id);
+            setContestantName(contestantToEdit.name);
+            setCategory(contestantToEdit.category);
+        }
     };
 
-    const handleDelete = (index: number) => {
-        setContestants(contestants.filter((_, i) => i !== index));
+    const handleDelete = (id: string) => {
+        const updatedContestants = contestants.filter((contestant) => contestant.id !== id);
+        setContestants(updatedContestants);
     };
+
+    const handleCancelEdit = () => {
+        setEditingId(null);
+        setContestantName(randomNames[Math.floor(Math.random() * randomNames.length)]);
+        setCategory('');
+    };
+
+    const groupedContestants = contestants.reduce((groups: Record<string, typeof contestants>, contestant) => {
+        if (!groups[contestant.category]) {
+            groups[contestant.category] = [];
+        }
+        groups[contestant.category].push(contestant);
+        return groups;
+    }, {});
+
+    const canStartTournament = () => {
+        let hasValidCategory = false;
+
+        for (const category of categories) {
+            const count = groupedContestants[category.name]?.length || 0;
+
+            if (count > 0 && count < 2) {
+                return false;
+            }
+
+            if (count >= 2) {
+                hasValidCategory = true;
+            }
+        }
+
+        return hasValidCategory;
+    };
+
+    useEffect(() => {
+        onCanStartTournamentChange?.(canStartTournament());
+    }, [contestants, categories]);
 
     return (
         <div>
@@ -59,23 +117,33 @@ const ContestantRegistration: React.FC = () => {
                 <select value={category} onChange={(e) => setCategory(e.target.value)} required>
                     <option value="">Kategória kiválasztása</option>
                     {categories.map((cat) => (
-                        <option key={cat.name} value={cat.name}>
+                        <option key={cat.id} value={cat.name}>
                             {cat.name}
                         </option>
                     ))}
                 </select>
-                <button type="submit">{editingIndex !== null ? 'Mentés' : 'Regisztrálás'}</button>
+                <button type="submit">{editingId !== null ? 'Mentés' : 'Regisztrálás'}</button>
+                {editingId !== null && (
+                    <button type="button" onClick={handleCancelEdit}>
+                        Mégse
+                    </button>
+                )}
             </form>
             <h3>Regisztrált Versenyzők</h3>
-            <ul>
-                {contestants.map((contestant, index) => (
-                    <li key={index}>
-                        {contestant.name} - {contestant.category}{' '}
-                        <button onClick={() => handleEdit(index)}>Szerkesztés</button>
-                        <button onClick={() => handleDelete(index)}>Törlés</button>
-                    </li>
-                ))}
-            </ul>
+            {Object.keys(groupedContestants).map((category) => (
+                <div key={category}>
+                    <h4>{category}</h4>
+                    <ul>
+                        {groupedContestants[category].map((contestant) => (
+                            <li key={contestant.id}>
+                                {contestant.name}{' '}
+                                <button onClick={() => handleEdit(contestant.id)}>Szerkesztés</button>
+                                <button onClick={() => handleDelete(contestant.id)}>Törlés</button>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            ))}
         </div>
     );
 };

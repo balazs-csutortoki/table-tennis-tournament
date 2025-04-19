@@ -1,7 +1,7 @@
 import React from 'react';
-import ContestantRegistration from '../components/ContestantRegistration';
 import MatchScheduling from '../components/MatchScheduling';
 import Rankings from '../components/Rankings';
+import ContestantRegistration from '../components/ContestantRegistration';
 
 const TournamentPage: React.FC = () => {
     return (

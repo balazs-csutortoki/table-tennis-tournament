@@ -1,15 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import ContestantRegistration from '../components/ContestantRegistration';
 
 const RegistrationPage: React.FC = () => {
+    const [canStartTournament, setCanStartTournament] = useState(false);
+
     return (
         <div>
             <h1>Versenyzők Regisztrációja</h1>
-            <ContestantRegistration />
+            <ContestantRegistration onCanStartTournamentChange={setCanStartTournament} />
             <br />
             <Link to="/tournament">
-                <button>Verseny kezdés</button>
+                <button disabled={!canStartTournament} >Verseny kezdés</button>
             </Link>
         </div>
     );

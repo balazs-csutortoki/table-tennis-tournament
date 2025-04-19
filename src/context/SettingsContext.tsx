@@ -1,11 +1,14 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { generateGUID } from '../utils';
 
 interface Category {
+    id: string; // Add id field
     name: string;
     isDistinct: boolean;
 }
 
 interface Contestant {
+    id: string; // Add id field
     name: string;
     category: string;
 }
@@ -25,11 +28,13 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     // Load initial state from localStorage
     const [categories, setCategories] = useState<Category[]>(() => {
         const savedCategories = localStorage.getItem('categories');
-        return savedCategories ? JSON.parse(savedCategories) : [
-            { name: 'Férfi', isDistinct: false },
-            { name: 'Női', isDistinct: false },
-            { name: 'Fiatalok', isDistinct: true },
-        ];
+        return savedCategories
+            ? JSON.parse(savedCategories)
+            : [
+                { id: generateGUID(), name: 'Férfi', isDistinct: false },
+                { id: generateGUID(), name: 'Női', isDistinct: false },
+                { id: generateGUID(), name: 'Fiatalok', isDistinct: true },
+            ];
     });
 
     const [tableCount, setTableCount] = useState<number>(() => {
@@ -39,7 +44,13 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     const [contestants, setContestants] = useState<Contestant[]>(() => {
         const savedContestants = localStorage.getItem('contestants');
-        return savedContestants ? JSON.parse(savedContestants) : [];
+        return savedContestants
+            ? JSON.parse(savedContestants)
+            : [
+                // Example initial contestants (optional)
+                { id: generateGUID(), name: 'John Doe', category: 'Férfi' },
+                { id: generateGUID(), name: 'Jane Doe', category: 'Női' },
+            ];
     });
 
     // Save categories to localStorage whenever they change

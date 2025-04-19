@@ -8,13 +8,11 @@ import { SettingsProvider } from './context/SettingsContext';
 const App: React.FC = () => {
   return (
     <SettingsProvider>
-      <Router>
-        <Routes>
-          <Route path="/" element={<SettingsPage />} />
-          <Route path="/tournament" element={<TournamentPage />} />
-          <Route path="/registration" element={<RegistrationPage />} />
-        </Routes>
-      </Router>
+      <Routes>
+        <Route path="/" element={<SettingsPage />} />
+        <Route path="/tournament" element={<TournamentPage />} />
+        <Route path="/registration" element={<RegistrationPage />} />
+      </Routes>
     </SettingsProvider>
   );
 };
