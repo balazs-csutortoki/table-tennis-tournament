@@ -1,18 +1,31 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useSettingsContext } from '../context/SettingsContext';
-import { generateGUID } from '../utils'; // Import the GUID generator
-import './SettingsPage.css'; // Import the CSS file
+import { generateGUID } from '../utils';
+import ConfirmationModal from '../components/ConfirmationModal'; // Import the modal component
+import './SettingsPage.css';
+
+const noOp = () => {
+    // No operation function
+};
 
 const SettingsPage: React.FC = () => {
     const { categories, setCategories, tableCount, setTableCount, setContestants } = useSettingsContext();
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [modalAction, setModalAction] = useState<() => void>(noOp);
+    const [modalMessage, setModalMessage] = useState(''); // Add a state for the modal message
 
     const handleAddCategory = () => {
         setCategories([...categories, { id: generateGUID(), name: '', isDistinct: false }]);
     };
 
     const handleRemoveCategory = (id: string) => {
-        setCategories(categories.filter((category) => category.id !== id));
+        setModalMessage('Biztosan törölni szeretné ezt a kategóriát?');
+        setModalAction(() => () => {
+            setCategories(categories.filter((category) => category.id !== id));
+            setIsModalOpen(false);
+        });
+        setIsModalOpen(true);
     };
 
     const handleCategoryChange = (id: string, key: keyof typeof categories[0], value: string | boolean) => {
@@ -23,14 +36,19 @@ const SettingsPage: React.FC = () => {
     };
 
     const handleReset = () => {
-        localStorage.clear();
-        setCategories([
-            { id: generateGUID(), name: 'Férfi', isDistinct: false },
-            { id: generateGUID(), name: 'Női', isDistinct: false },
-            { id: generateGUID(), name: 'Fiatalok', isDistinct: true },
-        ]);
-        setTableCount(2);
-        setContestants([]);
+        setModalMessage('Biztosan vissza szeretné állítani az alapértelmezett beállításokat?');
+        setModalAction(() => () => {
+            localStorage.clear();
+            setCategories([
+                { id: generateGUID(), name: 'Férfi', isDistinct: false },
+                { id: generateGUID(), name: 'Női', isDistinct: false },
+                { id: generateGUID(), name: 'Fiatalok', isDistinct: true },
+            ]);
+            setTableCount(2);
+            setContestants([]);
+            setIsModalOpen(false);
+        });
+        setIsModalOpen(true);
     };
 
     const incrementTableCount = () => {
@@ -102,6 +120,15 @@ const SettingsPage: React.FC = () => {
                     Alaphelyzet
                 </button>
             </footer>
+
+            {/* Confirmation Modal */}
+            {isModalOpen && (
+                <ConfirmationModal
+                    message={modalMessage} // Pass the dynamic message
+                    onConfirm={modalAction}
+                    onCancel={() => setIsModalOpen(false)}
+                />
+            )}
         </div>
     );
 };

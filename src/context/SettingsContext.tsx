@@ -2,15 +2,22 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { generateGUID } from '../utils';
 
 interface Category {
-    id: string; // Add id field
+    id: string;
     name: string;
     isDistinct: boolean;
 }
 
 interface Contestant {
-    id: string; // Add id field
+    id: string;
     name: string;
     category: string;
+}
+
+interface Match {
+    id: string;
+    player1: string; // Contestant ID
+    player2: string; // Contestant ID
+    category: string; // Category name
 }
 
 interface SettingsContextType {
@@ -20,12 +27,13 @@ interface SettingsContextType {
     setTableCount: React.Dispatch<React.SetStateAction<number>>;
     contestants: Contestant[];
     setContestants: React.Dispatch<React.SetStateAction<Contestant[]>>;
+    matches: Match[];
+    setMatches: React.Dispatch<React.SetStateAction<Match[]>>;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
 export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    // Load initial state from localStorage
     const [categories, setCategories] = useState<Category[]>(() => {
         const savedCategories = localStorage.getItem('categories');
         return savedCategories
@@ -39,34 +47,34 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     const [tableCount, setTableCount] = useState<number>(() => {
         const savedTableCount = localStorage.getItem('tableCount');
-        return savedTableCount ? JSON.parse(savedTableCount) : 2; // Default to 2 tables
+        return savedTableCount ? JSON.parse(savedTableCount) : 2;
     });
 
     const [contestants, setContestants] = useState<Contestant[]>(() => {
         const savedContestants = localStorage.getItem('contestants');
-        return savedContestants
-            ? JSON.parse(savedContestants)
-            : [
-                // Example initial contestants (optional)
-                { id: generateGUID(), name: 'John Doe', category: 'Férfi' },
-                { id: generateGUID(), name: 'Jane Doe', category: 'Női' },
-            ];
+        return savedContestants ? JSON.parse(savedContestants) : [];
     });
 
-    // Save categories to localStorage whenever they change
+    const [matches, setMatches] = useState<Match[]>(() => {
+        const savedMatches = localStorage.getItem('matches');
+        return savedMatches ? JSON.parse(savedMatches) : [];
+    });
+
     useEffect(() => {
         localStorage.setItem('categories', JSON.stringify(categories));
     }, [categories]);
 
-    // Save tableCount to localStorage whenever it changes
     useEffect(() => {
         localStorage.setItem('tableCount', JSON.stringify(tableCount));
     }, [tableCount]);
 
-    // Save contestants to localStorage whenever they change
     useEffect(() => {
         localStorage.setItem('contestants', JSON.stringify(contestants));
     }, [contestants]);
+
+    useEffect(() => {
+        localStorage.setItem('matches', JSON.stringify(matches));
+    }, [matches]);
 
     return (
         <SettingsContext.Provider
@@ -77,6 +85,8 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                 setTableCount,
                 contestants,
                 setContestants,
+                matches,
+                setMatches,
             }}
         >
             {children}

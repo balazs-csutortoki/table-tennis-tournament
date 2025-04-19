@@ -1,0 +1,220 @@
+.contestant-registration-page {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    font-family: Arial, sans-serif;
+    position: relative;
+    min-height: 100vh;
+}
+
+.contestant-registration-title {
+    font-size: 28px;
+    font-weight: bold;
+    margin-bottom: 20px;
+    text-align: center;
+    color: #333;
+}
+
+.contestant-registration-form {
+    margin-bottom: 30px;
+}
+
+.contestant-registration-input {
+    width: 70%;
+    padding: 10px;
+    font-size: 16px;
+    font-weight: bolder;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    margin-top: 5px;
+    margin-bottom: 10px;
+}
+
+.contestant-registration-select {
+    width: 72%;
+    padding: 10px;
+    font-size: 16px;
+    font-weight: bolder;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    margin-top: 5px;
+    margin-bottom: 10px;
+}
+
+.contestant-registration-button {
+    padding: 8px 12px;
+    font-size: 14px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.contestant-registration-add-button {
+    background-color: #4caf50;
+    color: white;
+}
+
+.contestant-registration-add-button:hover {
+    background-color: #45a049;
+}
+
+.contestant-registration-cancel-button {
+    background-color: #f44336;
+    color: white;
+}
+
+.contestant-registration-cancel-button:hover {
+    background-color: #e53935;
+}
+
+.contestant-list {
+    margin-top: 20px;
+}
+
+.contestant-list-title {
+    font-size: 20px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: #555;
+}
+
+.contestant-list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+}
+
+.contestant-list-button {
+    padding: 6px 10px;
+    font-size: 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.contestant-list-edit-button {
+    background-color: #2196f3;
+    color: white;
+}
+
+.contestant-list-edit-button:hover {
+    background-color: #1976d2;
+}
+
+.contestant-list-delete-button {
+    background-color: #f44336;
+    color: white;
+}
+
+.contestant-list-delete-button:hover {
+    background-color: #e53935;
+}
+
+.match-list {
+    margin-top: 30px;
+}
+
+.match-list-title {
+    font-size: 20px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: #555;
+}
+
+.match-list-item {
+    padding: 10px;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-bottom: 10px;
+}
+
+/* Multi-column layout for contestants */
+.contestant-table-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.contestant-table-column {
+    flex: 1;
+    min-width: 300px;
+    max-width: 33%;
+}
+
+.contestant-table-category {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.contestant-table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: #fff;
+}
+
+.contestant-table th,
+.contestant-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+
+.contestant-table th {
+    background-color: #f4f4f4;
+    font-weight: bold;
+}
+
+.contestant-table tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.contestant-table tr:hover {
+    background-color: #f1f1f1;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .contestant-registration-page {
+        padding: 15px;
+    }
+
+    .contestant-registration-title {
+        font-size: 24px;
+    }
+
+    .contestant-registration-input,
+    .contestant-registration-select {
+        width: 100%;
+    }
+
+    .contestant-list-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+@media (max-width: 480px) {
+    .contestant-registration-title {
+        font-size: 20px;
+    }
+
+    .contestant-registration-button {
+        font-size: 12px;
+        padding: 6px 10px;
+    }
+}

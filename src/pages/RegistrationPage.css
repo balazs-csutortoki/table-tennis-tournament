@@ -1,0 +1,27 @@
+.registration-page {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.start-tournament-button {
+    padding: 10px 20px;
+    font-size: 16px;
+    font-weight: bold;
+    display: block;
+    margin: 0 auto;
+    color: white;
+    background-color: #4caf50;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.start-tournament-button:hover {
+    background-color: #45a049;
+}
+
+.start-tournament-button.disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
