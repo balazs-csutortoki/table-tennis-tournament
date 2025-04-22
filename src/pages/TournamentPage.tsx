@@ -9,8 +9,8 @@ const TournamentPage: React.FC = () => {
         <div>
             <h1>Verseny Oldal</h1>
             <OngoingMatches />
-            <MatchScheduling />
-            <Rankings />
+
+
             <ContestantRegistration />
         </div>
     );

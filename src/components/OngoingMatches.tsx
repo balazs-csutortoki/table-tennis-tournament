@@ -19,6 +19,7 @@ interface Contestant {
 
 const OngoingMatches: React.FC = () => {
     const { tableCount, contestants, setContestants } = useSettingsContext();
+    const [selectedFinishedMatch, setSelectedFinishedMatch] = useState<Match | null>(null);
     const [scheduledMatches, setScheduledMatches] = useState<Match[]>(() =>
         JSON.parse(localStorage.getItem('scheduledMatches') || '[]')
     );
@@ -33,10 +34,10 @@ const OngoingMatches: React.FC = () => {
     const [searchQuery, setSearchQuery] = useState('');
 
     useEffect(() => {
-        localStorage.setItem('scheduledMatches', JSON.stringify(scheduledMatches));
+        // localStorage.setItem('scheduledMatches', JSON.stringify(scheduledMatches));
         localStorage.setItem('ongoingMatches', JSON.stringify(ongoingMatches));
         localStorage.setItem('finishedMatches', JSON.stringify(finishedMatches));
-    }, [scheduledMatches, ongoingMatches, finishedMatches]);
+    }, [/*scheduledMatches, */ongoingMatches, finishedMatches]);
 
     const getContestantName = (id: string) => {
         const contestant = contestants.find((c) => c.id === id);
@@ -46,32 +47,33 @@ const OngoingMatches: React.FC = () => {
     const assignMatchesToFreeTables = () => {
         // Fetch the latest ongoingMatches from localStorage
         const latestOngoingMatches = JSON.parse(localStorage.getItem('ongoingMatches') || '[]');
-
+        const scheduledMatchesFromStorage = JSON.parse(localStorage.getItem('scheduledMatches') || '[]');
+        const finishedMatchesFromStorage = JSON.parse(localStorage.getItem('finishedMatches') || '[]');
         const ongoingContestants = new Set(
             latestOngoingMatches.flatMap((match: Match) => [match.player1, match.player2])
         );
 
-        const finishedMatchIds = new Set(finishedMatches.map((match) => match.id));
+        const finishedMatchIds = new Set(finishedMatchesFromStorage.map((match: Match) => match.id));
 
         const freeTables = Array.from({ length: tableCount }, (_, i) => i + 1).filter(
             (tableNumber) => !latestOngoingMatches.some((match: Match) => match.tableNumber === tableNumber)
         );
 
-        let matchesToAssign = scheduledMatches.filter(
-            (match) =>
+        let matchesToAssign = scheduledMatchesFromStorage.filter(
+            (match: Match) =>
                 !ongoingContestants.has(match.player1) &&
                 !ongoingContestants.has(match.player2) &&
                 !finishedMatchIds.has(match.id) // Exclude matches already finished
         ).slice(0, freeTables.length);
 
         // Remove matches that use the same contestants, only keep the first one
-        matchesToAssign = matchesToAssign.filter((match, index, self) => {
+        matchesToAssign = matchesToAssign.filter((match: Match, index: number, self: Match[]) => {
             const player1Used = self.slice(0, index).some((m) => m.player1 === match.player1 || m.player2 === match.player1);
             const player2Used = self.slice(0, index).some((m) => m.player1 === match.player2 || m.player2 === match.player2);
             return !player1Used && !player2Used;
         });
 
-        const newOngoingMatches = matchesToAssign.map((match, index) => ({
+        const newOngoingMatches = matchesToAssign.map((match: Match, index: number) => ({
             ...match,
             tableNumber: freeTables[index],
         }));
@@ -117,6 +119,7 @@ const OngoingMatches: React.FC = () => {
 
     const openChangeMatchModal = (tableNumber: number) => {
         setSelectedTable(tableNumber);
+        setSelectedFinishedMatch(null);
         setIsModalOpen(true);
     };
 
@@ -141,6 +144,37 @@ const OngoingMatches: React.FC = () => {
             setScheduledMatches((prev) => prev.filter((match) => match.id !== newMatch.id));
 
             setIsModalOpen(false);
+        }
+    };
+
+    const changeWinner = (matchId: string, newWinnerId: string) => {
+        const match = finishedMatches.find((m) => m.id === matchId);
+        if (!match) return;
+
+        const oldWinnerId = match.winner;
+
+        // Update the match with the new winner
+        const updatedFinishedMatches = finishedMatches.map((m) =>
+            m.id === matchId ? { ...m, winner: newWinnerId } : m
+        );
+        setFinishedMatches(updatedFinishedMatches);
+        localStorage.setItem('finishedMatches', JSON.stringify(updatedFinishedMatches));
+
+        // Update points for the old and new winners
+        if (oldWinnerId !== newWinnerId) {
+            const updatedContestants = contestants.map((contestant) => {
+
+                if (contestant.id === oldWinnerId) {
+                    return { ...contestant, points: (contestant.points || 0) - 1 };
+                }
+                if (contestant.id === newWinnerId) {
+                    return { ...contestant, points: (contestant.points || 0) + 1 };
+                }
+                return contestant;
+            });
+
+            setContestants(updatedContestants);
+            localStorage.setItem('contestants', JSON.stringify(updatedContestants));
         }
     };
 
@@ -191,7 +225,7 @@ const OngoingMatches: React.FC = () => {
                 })}
             </div>
 
-            {isModalOpen && (
+            {isModalOpen && selectedTable && (
                 <Modal onClose={() => setIsModalOpen(false)}>
                     <h3>Select a New Match</h3>
                     <input
@@ -216,6 +250,33 @@ const OngoingMatches: React.FC = () => {
                 </Modal>
             )}
 
+            {isModalOpen && selectedFinishedMatch && (
+                <Modal onClose={() => setIsModalOpen(false)}>
+                    <h3>Change Winner for Match</h3>
+                    <p>
+                        {getContestantName(selectedFinishedMatch.player1)} vs {getContestantName(selectedFinishedMatch.player2)} ({selectedFinishedMatch.category})
+                    </p>
+                    <div>
+                        <button
+                            onClick={() => {
+                                changeWinner(selectedFinishedMatch.id, selectedFinishedMatch.player1);
+                                setIsModalOpen(false);
+                            }}
+                        >
+                            Set {getContestantName(selectedFinishedMatch.player1)} as Winner
+                        </button>
+                        <button
+                            onClick={() => {
+                                changeWinner(selectedFinishedMatch.id, selectedFinishedMatch.player2);
+                                setIsModalOpen(false);
+                            }}
+                        >
+                            Set {getContestantName(selectedFinishedMatch.player2)} as Winner
+                        </button>
+                    </div>
+                </Modal>
+            )}
+
             <h2>Finished Matches ({finishedMatches.length})</h2>
             <table>
                 <thead>
@@ -233,6 +294,17 @@ const OngoingMatches: React.FC = () => {
                             <td>{getContestantName(match.player2)}</td>
                             <td>{match.category}</td>
                             <td>{getContestantName(match.winner || '')}</td>
+                            <td>
+                                <button
+                                    onClick={() => {
+                                        setSelectedFinishedMatch(match);
+                                        setSelectedTable(0);
+                                        setIsModalOpen(true);
+                                    }}
+                                >
+                                    Change Winner
+                                </button>
+                            </td>
                         </tr>
                     ))}
                 </tbody>

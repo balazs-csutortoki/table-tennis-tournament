@@ -48,6 +48,13 @@ const ContestantRegistration: React.FC<ContestantRegistrationProps> = ({ onCanSt
 
     // Function to schedule matches
     const scheduleMatches = () => {
+        // Step 1: Map existing match IDs to contestant pairs
+        const matchIdMap = new Map<string, { player1: string; player2: string }>();
+        matches.forEach((match) => {
+            matchIdMap.set(match.id, { player1: match.player1, player2: match.player2 });
+        });
+
+        // Step 2: Generate new matches
         const newMatches: typeof matches = [];
 
         // Group contestants by distinct and non-distinct categories
@@ -72,13 +79,14 @@ const ContestantRegistration: React.FC<ContestantRegistrationProps> = ({ onCanSt
                 for (let j = 0; j < group.length / 2; j++) {
                     const player1 = group[j];
                     const player2 = group[group.length - 1 - j];
-                    if (player1 && player2 && player1.id !== 'dummy' && player2.id !== 'dummy') { // Ignore dummy matches
+                    if (player1 && player2 && player1.id !== 'dummy' && player2.id !== 'dummy') {
                         if (player1.category !== player2.category) {
                             categoryName = 'Mixed Categories';
-                        } else
+                        } else {
                             categoryName = player1.category;
+                        }
                         round.push({
-                            id: generateGUID(),
+                            id: '', // Placeholder for ID, will be reassigned later
                             player1: player1.id,
                             player2: player2.id,
                             category: categoryName,
@@ -104,32 +112,30 @@ const ContestantRegistration: React.FC<ContestantRegistrationProps> = ({ onCanSt
         // Generate matches for non-distinct categories
         const nonDistinctMatches: typeof matches = [];
         if (nonDistinctContestants.length > 1) {
-
             nonDistinctMatches.push(...generateMatches([...nonDistinctContestants], 'Mixed Categories'));
         }
 
-        // Insert distinct matches after every (nonDistinctContestants.length / 2) non-distinct matches
-        const mergedMatches: typeof matches = [];
-        const insertInterval = Math.ceil(nonDistinctContestants.length / 2);
-        let distinctIndex = 0;
+        // Combine distinct and non-distinct matches
+        const mergedMatches = [...distinctMatches, ...nonDistinctMatches];
 
-        for (let i = 0; i < nonDistinctMatches.length; i++) {
-            mergedMatches.push(nonDistinctMatches[i]);
+        // Step 3: Reassign original match IDs
+        const updatedMatches = mergedMatches.map((match) => {
+            // Check if the pair exists in the original match ID map
+            const existingMatchId = Array.from(matchIdMap.entries()).find(
+                ([, pair]) =>
+                    (pair.player1 === match.player1 && pair.player2 === match.player2) ||
+                    (pair.player1 === match.player2 && pair.player2 === match.player1)
+            )?.[0];
 
-            // Insert a distinct match after every `insertInterval` non-distinct matches
-            if ((i + 1) % insertInterval === 0 && distinctIndex < distinctMatches.length) {
-                mergedMatches.push(distinctMatches[distinctIndex]);
-                distinctIndex++;
-            }
-        }
+            return {
+                ...match,
+                id: existingMatchId || generateGUID(), // Reuse the existing ID or generate a new one
+            };
+        });
 
-        // Add any remaining distinct matches
-        while (distinctIndex < distinctMatches.length) {
-            mergedMatches.push(distinctMatches[distinctIndex]);
-            distinctIndex++;
-        }
-
-        setMatches(mergedMatches);
+        // Step 4: Update state and local storage
+        setMatches(updatedMatches);
+        localStorage.setItem('scheduledMatches', JSON.stringify(updatedMatches));
     };
 
     const openContestantModal = (contestantId: string) => {
@@ -380,7 +386,7 @@ const ContestantRegistration: React.FC<ContestantRegistrationProps> = ({ onCanSt
                 />
             )}
 
-            {isContestantModalOpen && selectedContestant && (
+            {JSON.parse(localStorage.getItem('contestants') || '[]').length !== 0 && isContestantModalOpen && selectedContestant && (
                 <Modal onClose={() => setIsContestantModalOpen(false)}>
                     <h3>Matches for {selectedContestant.name}</h3>
                     <h4>Finished Matches</h4>
