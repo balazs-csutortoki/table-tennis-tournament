@@ -6,8 +6,13 @@ import './RegistrationPage.css';
 const RegistrationPage: React.FC = () => {
     const [canStartTournament, setCanStartTournament] = useState(false);
 
+    const handleStartTournament = (assignMatches: () => void) => {
+        assignMatches(); // Trigger match assignment
+    };
+
     return (
         <div>
+            <h1>Registration Page</h1>
             <ContestantRegistration onCanStartTournamentChange={setCanStartTournament} />
             <br />
             <Link to="/tournament">

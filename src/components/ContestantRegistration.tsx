@@ -3,6 +3,9 @@ import { useSettingsContext } from '../context/SettingsContext';
 import { generateGUID } from '../utils'; // Import the GUID generator
 import './ContestantRegistration.css'; // Import the CSS file
 import ConfirmationModal from './ConfirmationModal';
+import { Contestant } from '../types';
+import Modal from './Modal';
+import { Match } from './OngoingMatches';
 
 const noOp = () => {
     // No operation function
@@ -17,6 +20,8 @@ const ContestantRegistration: React.FC<ContestantRegistrationProps> = ({ onCanSt
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalAction, setModalAction] = useState<() => void>(noOp);
     const [modalMessage, setModalMessage] = useState('');
+    const [selectedContestant, setSelectedContestant] = useState<Contestant | null>(null);
+    const [isContestantModalOpen, setIsContestantModalOpen] = useState(false);
     // List of random first names
     const randomNames = ['John', 'Jane', 'Alice', 'Bob', 'Charlie', 'Diana', 'Eve', 'Frank', 'Grace', 'Hank'];
 
@@ -26,7 +31,12 @@ const ContestantRegistration: React.FC<ContestantRegistrationProps> = ({ onCanSt
     );
     const [category, setCategory] = useState('');
     const [editingId, setEditingId] = useState<string | null>(null); // Use GUID for editing
-
+    const [scheduledMatches, setScheduledMatches] = useState<Match[]>(() =>
+        JSON.parse(localStorage.getItem('scheduledMatches') || '[]')
+    );
+    const [finishedMatches, setFinishedMatches] = useState<Match[]>(() =>
+        JSON.parse(localStorage.getItem('finishedMatches') || '[]')
+    );
     // Function to shuffle an array
     const shuffleArray = (array: any[]) => {
         for (let i = array.length - 1; i > 0; i--) {
@@ -53,7 +63,7 @@ const ContestantRegistration: React.FC<ContestantRegistrationProps> = ({ onCanSt
 
             // Add a dummy contestant if the number of contestants is odd
             if (totalContestants % 2 !== 0) {
-                group.push({ id: 'dummy', name: 'Dummy', category: categoryName });
+                group.push({ id: 'dummy', name: 'Dummy', category: categoryName, points: 0 });
             }
 
             // Create a round-robin schedule
@@ -122,6 +132,19 @@ const ContestantRegistration: React.FC<ContestantRegistrationProps> = ({ onCanSt
         setMatches(mergedMatches);
     };
 
+    const openContestantModal = (contestantId: string) => {
+        //fetch finished matches from local storage and update the state
+        const finishedMatchesFromStorage = JSON.parse(localStorage.getItem('finishedMatches') || '[]');
+        setFinishedMatches(finishedMatchesFromStorage);
+        const scheduledMatchesFromStorage = JSON.parse(localStorage.getItem('scheduledMatches') || '[]');
+        setScheduledMatches(scheduledMatchesFromStorage);
+        const contestant = contestants.find((c) => c.id === contestantId);
+        if (contestant) {
+            setSelectedContestant(contestant);
+            setIsContestantModalOpen(true);
+        }
+    };
+
     const handleRegister = (e: React.FormEvent) => {
         e.preventDefault();
         if (contestantName && category) {
@@ -147,7 +170,7 @@ const ContestantRegistration: React.FC<ContestantRegistrationProps> = ({ onCanSt
                 setEditingId(null);
             } else {
                 // Add a new contestant with a GUID
-                setContestants([...contestants, { id: generateGUID(), name: contestantName, category }]);
+                setContestants([...contestants, { id: generateGUID(), name: contestantName, category, points: 0 }]);
             }
 
             // Reset the form with a new random name, but keep the last selected category
@@ -183,6 +206,11 @@ const ContestantRegistration: React.FC<ContestantRegistrationProps> = ({ onCanSt
         setContestantName(`${randomNames[Math.floor(Math.random() * randomNames.length)]} ${Math.floor(Math.random() * 90 + 10)}`);
     };
 
+    const getContestantName = (id: string): string => {
+        const contestant = contestants.find((c) => c.id === id);
+        return contestant ? contestant.name : 'Unknown';
+    };
+
     const groupedContestants = contestants.reduce((groups: Record<string, typeof contestants>, contestant) => {
         if (!groups[contestant.category]) {
             groups[contestant.category] = [];
@@ -194,7 +222,22 @@ const ContestantRegistration: React.FC<ContestantRegistrationProps> = ({ onCanSt
     const canStartTournament = () => {
         let hasValidCategory = false;
 
-        for (const category of categories) {
+        // Combine all contestants from non-distinct categories into one group
+        const nonDistinctContestants = contestants.filter((c) =>
+            categories.some((cat) => cat.name === c.category && !cat.isDistinct)
+        );
+
+        // Check if the combined non-distinct group has enough contestants
+        if (nonDistinctContestants.length > 0 && nonDistinctContestants.length < 2) {
+            return false;
+        }
+
+        if (nonDistinctContestants.length >= 2) {
+            hasValidCategory = true;
+        }
+
+        // Check distinct categories
+        for (const category of categories.filter((cat) => cat.isDistinct)) {
             const count = groupedContestants[category.name]?.length || 0;
 
             if (count > 0 && count < 2) {
@@ -214,8 +257,20 @@ const ContestantRegistration: React.FC<ContestantRegistrationProps> = ({ onCanSt
     }, [contestants, categories]);
 
     // Schedule matches whenever contestants are updated
+    // Do not update if points are changed
+    /* useEffect(() => {
+         scheduleMatches();
+     }, [contestants]);*/
+
     useEffect(() => {
-        scheduleMatches();
+        const contestantsForScheduling = contestants.map(({ id, category }) => ({ id, category }));
+        const previousContestantsForScheduling = JSON.parse(localStorage.getItem('contestantsForScheduling') || '[]');
+
+        // Only schedule matches if the contestants' categories or count have changed
+        if (JSON.stringify(contestantsForScheduling) !== JSON.stringify(previousContestantsForScheduling)) {
+            scheduleMatches();
+            localStorage.setItem('contestantsForScheduling', JSON.stringify(contestantsForScheduling));
+        }
     }, [contestants]);
 
     return (
@@ -268,36 +323,45 @@ const ContestantRegistration: React.FC<ContestantRegistrationProps> = ({ onCanSt
                             <thead>
                                 <tr>
                                     <th>Név</th>
+                                    <th>Pontok</th>
                                     <th>Műveletek</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {(groupedContestants[cat.name] || []).map((contestant) => (
-                                    <tr key={contestant.id}>
-                                        <td>{contestant.name}</td>
-                                        <td>
-                                            <button
-                                                className="contestant-list-button contestant-list-edit-button"
-                                                onClick={() => handleEdit(contestant.id)}
+                                {(groupedContestants[cat.name] || [])
+                                    .sort((a, b) => b.points - a.points) // Sort by points in descending order
+                                    .map((contestant, index) => (
+                                        <tr key={contestant.id}>
+                                            <td style={{ fontWeight: index === 0 ? 'bold' : 'normal' }}><span
+                                                className="clickable-contestant-name"
+                                                onClick={() => openContestantModal(contestant.id)}
                                             >
-                                                Szerkesztés
-                                            </button>
-                                            <button
-                                                className="contestant-list-button contestant-list-delete-button"
-                                                onClick={() => handleDelete/*Confirm*/(contestant.id)}
-                                            >
-                                                Törlés
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
+                                                {contestant.name}
+                                            </span></td>
+                                            <td>{contestant.points}</td>
+                                            <td>
+                                                <button
+                                                    className="contestant-list-button contestant-list-edit-button"
+                                                    onClick={() => handleEdit(contestant.id)}
+                                                >
+                                                    Szerkesztés
+                                                </button>
+                                                <button
+                                                    className="contestant-list-button contestant-list-delete-button"
+                                                    onClick={() => handleDeleteConfirm(contestant.id)}
+                                                >
+                                                    Törlés
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
                             </tbody>
                         </table>
                     </div>
                 ))}
             </div>
 
-            {/* List of Matches 
+            {/* List of Matches */}
             <h3 className="match-list-title">Ütemezett Mérkőzések</h3>
             <ul className="match-list">
                 {matches.map((match) => (
@@ -306,7 +370,7 @@ const ContestantRegistration: React.FC<ContestantRegistrationProps> = ({ onCanSt
                         {contestants.find((c) => c.id === match.player2)?.name} ({match.category})
                     </li>
                 ))}
-            </ul>*/}
+            </ul>
 
             {isModalOpen && (
                 <ConfirmationModal
@@ -314,6 +378,52 @@ const ContestantRegistration: React.FC<ContestantRegistrationProps> = ({ onCanSt
                     onConfirm={modalAction}
                     onCancel={() => setIsModalOpen(false)}
                 />
+            )}
+
+            {isContestantModalOpen && selectedContestant && (
+                <Modal onClose={() => setIsContestantModalOpen(false)}>
+                    <h3>Matches for {selectedContestant.name}</h3>
+                    <h4>Finished Matches</h4>
+                    <ul>
+                        {finishedMatches
+                            .filter(
+                                (match: Match) =>
+                                    match.player1 === selectedContestant.id ||
+                                    match.player2 === selectedContestant.id
+                            )
+                            .map((match: Match) => {
+                                const isWinner = match.winner === selectedContestant.id;
+                                return (
+                                    <li key={match.id}>
+                                        {getContestantName(match.player1)} vs {getContestantName(match.player2)} -{' '}
+                                        <span style={{ color: isWinner ? 'green' : 'red' }}>
+                                            Winner: {getContestantName(match.winner || '')}
+                                        </span>
+                                    </li>
+                                );
+                            })}
+                    </ul>
+                    <h4>Pending Matches</h4>
+                    <ul>
+                        {scheduledMatches
+                            .filter(
+                                (match: Match) =>
+                                    (match.player1 === selectedContestant.id ||
+                                        match.player2 === selectedContestant.id) &&
+                                    // Filter out matches that have already been played from the finishedMatches
+                                    !finishedMatches.some(
+                                        (finishedMatch: Match) =>
+                                            (finishedMatch.id === match.id)
+                                    )
+
+                            )
+                            .map((match: Match) => (
+                                <li key={match.id}>
+                                    {getContestantName(match.player1)} vs {getContestantName(match.player2)} ({match.category})
+                                </li>
+                            ))}
+                    </ul>
+                </Modal>
             )}
         </div>
     );

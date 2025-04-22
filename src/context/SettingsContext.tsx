@@ -11,6 +11,7 @@ interface Contestant {
     id: string;
     name: string;
     category: string;
+    points: number;
 }
 
 interface Match {
@@ -56,7 +57,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     });
 
     const [matches, setMatches] = useState<Match[]>(() => {
-        const savedMatches = localStorage.getItem('matches');
+        const savedMatches = localStorage.getItem('scheduledMatches');
         return savedMatches ? JSON.parse(savedMatches) : [];
     });
 
@@ -73,7 +74,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }, [contestants]);
 
     useEffect(() => {
-        localStorage.setItem('matches', JSON.stringify(matches));
+        localStorage.setItem('scheduledMatches', JSON.stringify(matches));
     }, [matches]);
 
     return (
