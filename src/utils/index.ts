@@ -12,17 +12,6 @@ export const calculateRankings = (contestants: { name: string; points: number }[
     return contestants.sort((a, b) => b.points - a.points);
 };
 
-export const exportDataToJson = (data: any, filename: string): void => {
-    const json = JSON.stringify(data, null, 2);
-    const blob = new Blob([json], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    a.click();
-    URL.revokeObjectURL(url);
-};
-
 export const generateGUID = () => {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
         const r = (Math.random() * 16) | 0;

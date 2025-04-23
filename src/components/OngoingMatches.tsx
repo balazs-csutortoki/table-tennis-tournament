@@ -2,22 +2,11 @@ import React, { useState, useEffect } from 'react';
 import './OngoingMatches.css'; // Add styles for the component
 import Modal from './Modal'; // Assume a reusable Modal component exists
 import { useSettingsContext } from '../context/SettingsContext';
-
-export interface Match {
-    id: string;
-    player1: string; // Contestant ID
-    player2: string; // Contestant ID
-    category: string;
-    tableNumber?: number;
-    winner?: string;
-}
-
-interface Contestant {
-    id: string;
-    name: string;
-}
+import { Match } from '../types';
+import { useTranslation } from 'react-i18next';
 
 const OngoingMatches: React.FC = () => {
+    const { t } = useTranslation();
     const { tableCount, contestants, setContestants } = useSettingsContext();
     const [selectedFinishedMatch, setSelectedFinishedMatch] = useState<Match | null>(null);
     const [scheduledMatches, setScheduledMatches] = useState<Match[]>(() =>
@@ -41,7 +30,7 @@ const OngoingMatches: React.FC = () => {
 
     const getContestantName = (id: string) => {
         const contestant = contestants.find((c) => c.id === id);
-        return contestant ? contestant.name : 'Unknown';
+        return contestant ? contestant.name : t('tournamnet.unknownContestant');
     };
 
     const assignMatchesToFreeTables = () => {
@@ -184,13 +173,13 @@ const OngoingMatches: React.FC = () => {
 
     return (
         <div className="ongoing-matches">
-            <h2>Ongoing Matches</h2>
+            <h2>{t('tournament.ongoingMatchesTitle')}</h2>
             <div className="tables">
                 {Array.from({ length: tableCount }, (_, i) => i + 1).map((tableNumber) => {
                     const match = ongoingMatches.find((m) => m.tableNumber === tableNumber);
                     return (
                         <div key={tableNumber} className="table">
-                            <h3>Table {tableNumber}</h3>
+                            <h3>{tableNumber}. {t('tournament.table')}</h3>
                             {match ? (
                                 <div>
                                     <p>
@@ -200,25 +189,25 @@ const OngoingMatches: React.FC = () => {
                                         <button
                                             onClick={() => finishMatch(tableNumber, match.player1)}
                                         >
-                                            {getContestantName(match.player1)} Wins
+                                            {getContestantName(match.player1)} {t('tournament.winner')}
                                         </button>
                                         <button
                                             onClick={() => finishMatch(tableNumber, match.player2)}
                                         >
-                                            {getContestantName(match.player2)} Wins
+                                            {getContestantName(match.player2)} {t('tournament.winner')}
                                         </button>
                                     </div>
                                     <button
                                         className="change-match-button"
                                         onClick={() => openChangeMatchModal(tableNumber)}
                                     >
-                                        Change Match
+                                        {t('tournament.changeMatch')}
                                     </button>
                                 </div>
                             ) : scheduledMatches.length > 0 ? (
-                                <p>No match available</p>
+                                <p>{t('tournament.noMatch')}</p>
                             ) : (
-                                <p>No match available</p>
+                                <p>{t('tournament.noMatch')}</p>
                             )}
                         </div>
                     );
@@ -227,7 +216,7 @@ const OngoingMatches: React.FC = () => {
 
             {isModalOpen && selectedTable && (
                 <Modal onClose={() => setIsModalOpen(false)}>
-                    <h3>Select a New Match</h3>
+                    <h3>{t('tournament.newMatchSelection')}</h3>
                     <input
                         type="text"
                         placeholder="Search for a contestant"
@@ -243,7 +232,7 @@ const OngoingMatches: React.FC = () => {
                             .map((match) => (
                                 <li key={match.id}>
                                     {getContestantName(match.player1)} vs {getContestantName(match.player2)} ({match.category})
-                                    <button onClick={() => changeMatch(match)}>Select</button>
+                                    <button onClick={() => changeMatch(match)}>{t('tournament.select')}</button>
                                 </li>
                             ))}
                     </ul>
@@ -252,7 +241,7 @@ const OngoingMatches: React.FC = () => {
 
             {isModalOpen && selectedFinishedMatch && (
                 <Modal onClose={() => setIsModalOpen(false)}>
-                    <h3>Change Winner for Match</h3>
+                    <h3>{t('tournament.changeWinner')}</h3>
                     <p>
                         {getContestantName(selectedFinishedMatch.player1)} vs {getContestantName(selectedFinishedMatch.player2)} ({selectedFinishedMatch.category})
                     </p>
@@ -263,7 +252,7 @@ const OngoingMatches: React.FC = () => {
                                 setIsModalOpen(false);
                             }}
                         >
-                            Set {getContestantName(selectedFinishedMatch.player1)} as Winner
+                            {getContestantName(selectedFinishedMatch.player1)} {t('tournament.winner')}
                         </button>
                         <button
                             onClick={() => {
@@ -271,20 +260,20 @@ const OngoingMatches: React.FC = () => {
                                 setIsModalOpen(false);
                             }}
                         >
-                            Set {getContestantName(selectedFinishedMatch.player2)} as Winner
+                            {getContestantName(selectedFinishedMatch.player2)} {t('tournament.winner')}
                         </button>
                     </div>
                 </Modal>
             )}
 
-            <h2>Finished Matches ({finishedMatches.length})</h2>
+            <h2>{t('tournament.finishedMatchesTitle')} ({finishedMatches.length})</h2>
             <table>
                 <thead>
                     <tr>
-                        <th>Player 1</th>
-                        <th>Player 2</th>
-                        <th>Category</th>
-                        <th>Winner</th>
+                        <th>{t('tournament.player')} 1</th>
+                        <th>{t('tournament.player')} 2</th>
+                        <th>{t('tournament.categoryColumn')}</th>
+                        <th>{t('tournament.winnerColumn')}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -302,7 +291,7 @@ const OngoingMatches: React.FC = () => {
                                         setIsModalOpen(true);
                                     }}
                                 >
-                                    Change Winner
+                                    {t('tournament.change')}
                                 </button>
                             </td>
                         </tr>

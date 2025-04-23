@@ -4,23 +4,25 @@ import { useSettingsContext } from '../context/SettingsContext';
 import { generateGUID } from '../utils';
 import ConfirmationModal from '../components/ConfirmationModal'; // Import the modal component
 import './SettingsPage.css';
+import { useTranslation } from 'react-i18next';
 
 const noOp = () => {
     // No operation function
 };
 
 const SettingsPage: React.FC = () => {
+    const { t } = useTranslation();
     const { categories, setCategories, tableCount, setTableCount, setContestants } = useSettingsContext();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalAction, setModalAction] = useState<() => void>(noOp);
-    const [modalMessage, setModalMessage] = useState(''); // Add a state for the modal message
+    const [modalMessage, setModalMessage] = useState('');
 
     const handleAddCategory = () => {
         setCategories([...categories, { id: generateGUID(), name: '', isDistinct: false }]);
     };
 
     const handleRemoveCategory = (id: string) => {
-        setModalMessage('Biztosan törölni szeretné ezt a kategóriát?');
+        setModalMessage(t('settings.confirmDeleteCategory'));
         setModalAction(() => () => {
             setCategories(categories.filter((category) => category.id !== id));
             setIsModalOpen(false);
@@ -36,13 +38,13 @@ const SettingsPage: React.FC = () => {
     };
 
     const handleReset = () => {
-        setModalMessage('Biztosan vissza szeretné állítani az alapértelmezett beállításokat?');
+        setModalMessage(t('settings.confirmResetDefaults'));
         setModalAction(() => () => {
             localStorage.clear();
             setCategories([
-                { id: generateGUID(), name: 'Férfi', isDistinct: false },
-                { id: generateGUID(), name: 'Női', isDistinct: false },
-                { id: generateGUID(), name: 'Fiatalok', isDistinct: true },
+                { id: generateGUID(), name: t('settings.defaultCategoryMale'), isDistinct: false },
+                { id: generateGUID(), name: t('settings.defaultCategoryFemale'), isDistinct: false },
+                { id: generateGUID(), name: t('settings.defaultCategoryYouth'), isDistinct: true },
             ]);
             setTableCount(2);
             setContestants([]);
@@ -61,11 +63,11 @@ const SettingsPage: React.FC = () => {
 
     return (
         <div className="settings-page">
-            <h1 className="settings-title">Beállítások</h1>
+            <h1 className="settings-title">{t('settings.concurrentMatches')}</h1>
 
             {/* Number of Tables */}
             <div className="settings-section">
-                <h2 className="settings-subtitle">Asztalok száma</h2>
+                <h2 className="settings-subtitle">{t('settings.concurrentMatches')}</h2>
                 <div className="number-selector">
                     <button onClick={decrementTableCount} className="number-selector-button">-</button>
                     <span className="number-selector-value">{tableCount}</span>
@@ -75,7 +77,7 @@ const SettingsPage: React.FC = () => {
 
             {/* Categories */}
             <div className="settings-section">
-                <h2 className="settings-subtitle">Kategóriák</h2>
+                <h2 className="settings-subtitle">{t('settings.categories')}</h2>
                 <ul className="settings-category-list">
                     {categories.map((category) => (
                         <li key={category.id} className="settings-category-item">
@@ -83,7 +85,7 @@ const SettingsPage: React.FC = () => {
                                 type="text"
                                 value={category.name}
                                 onChange={(e) => handleCategoryChange(category.id, 'name', e.target.value)}
-                                placeholder="Kategória neve"
+                                placeholder={t('settings.categoryPlaceholder')}
                                 className="settings-input"
                             />
                             <label className="settings-toggle-label">
@@ -94,37 +96,37 @@ const SettingsPage: React.FC = () => {
                                     className="settings-toggle-checkbox"
                                 />
                                 <span className="settings-toggle-slider"></span>
-                                Különálló kategória
+                                {t('settings.isDistinctCategory')}
                             </label>
                             <button onClick={() => handleRemoveCategory(category.id)} className="settings-button settings-remove-button">
-                                Törlés
+                                {t('settings.delete')}
                             </button>
                         </li>
                     ))}
                 </ul>
                 <button onClick={handleAddCategory} className="settings-button settings-add-button">
-                    Új kategória hozzáadása
+                    {t('settings.addCategory')}
                 </button>
             </div>
 
             {/* Navigation */}
             <div className="settings-section">
                 <Link to="/registration">
-                    <button className="settings-button settings-nav-button">Versenyzők regisztrációja</button>
+                    <button className="settings-button settings-nav-button">{t('settings.navigateToRegistration')}</button>
                 </Link>
             </div>
 
             {/* Footer */}
             <footer className="settings-footer">
                 <button onClick={handleReset} className="settings-button settings-reset-button">
-                    Alaphelyzet
+                    {t('settings.resetDefaults')}
                 </button>
             </footer>
 
             {/* Confirmation Modal */}
             {isModalOpen && (
                 <ConfirmationModal
-                    message={modalMessage} // Pass the dynamic message
+                    message={modalMessage}
                     onConfirm={modalAction}
                     onCancel={() => setIsModalOpen(false)}
                 />

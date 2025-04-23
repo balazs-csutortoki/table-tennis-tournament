@@ -4,14 +4,14 @@ export interface Contestant {
     category: string;
     points: number;
 }
-
 export interface Match {
     id: string;
-    contestants: Contestant[];
-    winner?: Contestant;
-    date: Date;
+    player1: string; // Contestant ID
+    player2: string; // Contestant ID
+    category: string;
+    tableNumber?: number;
+    winner?: string;
 }
-
 export interface Category {
     id: string;
     name: string;

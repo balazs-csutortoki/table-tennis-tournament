@@ -1,41 +1,56 @@
 {
-  "tournament": "Torna",
   "settings": {
     "concurrentMatches": "Párhuzamos mérkőzések",
     "categories": "Kategóriák",
-    "addCategory": "Kategória hozzáadása",
-    "removeCategory": "Kategória eltávolítása"
+    "categoryPlaceholder": "Kategória neve",
+    "isDistinctCategory": "Különálló kategória",
+    "delete": "Törlés",
+    "addCategory": "Új kategória hozzáadása",
+    "navigateToRegistration": "Versenyzők regisztrációja",
+    "resetDefaults": "Alaphelyzet",
+    "confirmDeleteCategory": "Biztosan törölni szeretné ezt a kategóriát?",
+    "confirmResetDefaults": "Biztosan vissza szeretné állítani az alapértelmezett beállításokat?",
+    "defaultCategoryMale": "Férfi",
+    "defaultCategoryFemale": "Női",
+    "defaultCategoryYouth": "Fiatalok"
   },
-  "contestant": {
-    "registration": "Versenyző regisztráció",
-    "name": "Név",
+  "register": {
+    "pageTitle": "Regisztráció",
+    "startTournament": "Verseny kezdés",
+    "mixedCategories": "Vegyes",
+    "alreadyRegistered": "Ez a név már regisztrálva van!",
+    "deleteContestantConfirmation": "Biztosan törölni szeretné ezt a versenyzőt?",
+    "contestantRegiestrationTitle": "Versenyzők regisztrációja",
+    "scheduledMatchesTitle": "Ütemezett mérkőzések",
     "selectCategory": "Kategória kiválasztása",
-    "registeredContestants": "Regisztrált versenyzők"
+    "save": "Mentés",
+    "registerContestant": "Regisztrálás",
+    "cancel": "Mégse",
+    "contestantNamePlaceholder": "Versenyző neve",
+    "registeredContestantsTitle": "Regisztrált versenyzők",
+    "contestantName": "Név",
+    "contestantPoints": "Pontok",
+    "contestantActions": "Műveletek",
+    "edit": "Szerkesztés",
+    "yes": "Igen",
+    "delete": "Törlés",
+    "matchesfor": "mérkőzései"
   },
-  "match": {
-    "scheduling": "Mérkőzés ütemezés",
-    "ongoingMatches": "Folyamatban lévő mérkőzések",
-    "upcomingMatches": "Következő mérkőzések",
-    "determineWinner": "Győztes meghatározása"
-  },
-  "rankings": {
-    "currentRankings": "Jelenlegi rangsor",
-    "points": "Pontok",
-    "groupByCategory": "Kategória szerinti csoportosítás"
-  },
-  "dataExport": {
-    "exportData": "Adatok exportálása",
-    "exportFormat": "Exportálási formátum"
-  },
-  "homePage": {
-    "welcome": "Üdvözöljük a Torna Menedzserben",
-    "navigateToSettings": "Navigálás a beállításokhoz",
-    "navigateToTournament": "Navigálás a torna oldalra"
-  },
-  "tournamentPage": {
-    "tournamentDetails": "Torna részletei"
-  },
-  "settingsPage": {
-    "configureSettings": "Beállítások konfigurálása"
+  "tournament": {
+    "unknownContestant": "Ismeretlen",
+    "ongoingMatchesTitle": "Folyamatban lévő mérkőzések",
+    "table": "asztal",
+    "winner": "nyert",
+    "changeMatch": "Váltás",
+    "noMatch": "Nincs elérhető mérkőzés",
+    "newMatchSelection": "Új mérkőzés kiválasztása",
+    "select": "Kiválasztás",
+    "changeWinner": "Győztes megváltoztatása",
+    "finishedMatchesTitle": "Befejezett mérkőzések",
+    "pendingMatchesTitle": "Függőben lévő mérkőzések",
+    "player": "Játékos",
+    "categoryColumn": "Kategória",
+    "winnerColumn": "Nyertes",
+    "change": "Módosítás"
   }
 }

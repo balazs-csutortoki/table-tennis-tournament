@@ -3,9 +3,10 @@ import { useSettingsContext } from '../context/SettingsContext';
 import { generateGUID } from '../utils'; // Import the GUID generator
 import './ContestantRegistration.css'; // Import the CSS file
 import ConfirmationModal from './ConfirmationModal';
-import { Contestant } from '../types';
+import { Contestant, Match } from '../types';
 import Modal from './Modal';
-import { Match } from './OngoingMatches';
+import { useTranslation } from 'react-i18next';
+
 
 const noOp = () => {
     // No operation function
@@ -16,6 +17,7 @@ interface ContestantRegistrationProps {
 }
 
 const ContestantRegistration: React.FC<ContestantRegistrationProps> = ({ onCanStartTournamentChange }) => {
+    const { t } = useTranslation();
     const { categories, contestants, setContestants, matches, setMatches } = useSettingsContext();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalAction, setModalAction] = useState<() => void>(noOp);
@@ -37,14 +39,6 @@ const ContestantRegistration: React.FC<ContestantRegistrationProps> = ({ onCanSt
     const [finishedMatches, setFinishedMatches] = useState<Match[]>(() =>
         JSON.parse(localStorage.getItem('finishedMatches') || '[]')
     );
-    // Function to shuffle an array
-    const shuffleArray = (array: any[]) => {
-        for (let i = array.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [array[i], array[j]] = [array[j], array[i]];
-        }
-        return array;
-    };
 
     // Function to schedule matches
     const scheduleMatches = () => {
@@ -54,8 +48,6 @@ const ContestantRegistration: React.FC<ContestantRegistrationProps> = ({ onCanSt
             matchIdMap.set(match.id, { player1: match.player1, player2: match.player2 });
         });
 
-        // Step 2: Generate new matches
-        const newMatches: typeof matches = [];
 
         // Group contestants by distinct and non-distinct categories
         const distinctCategories = categories.filter((cat) => cat.isDistinct);
@@ -81,7 +73,7 @@ const ContestantRegistration: React.FC<ContestantRegistrationProps> = ({ onCanSt
                     const player2 = group[group.length - 1 - j];
                     if (player1 && player2 && player1.id !== 'dummy' && player2.id !== 'dummy') {
                         if (player1.category !== player2.category) {
-                            categoryName = 'Mixed Categories';
+                            categoryName = t('register.mixedCategories');
                         } else {
                             categoryName = player1.category;
                         }
@@ -112,7 +104,7 @@ const ContestantRegistration: React.FC<ContestantRegistrationProps> = ({ onCanSt
         // Generate matches for non-distinct categories
         const nonDistinctMatches: typeof matches = [];
         if (nonDistinctContestants.length > 1) {
-            nonDistinctMatches.push(...generateMatches([...nonDistinctContestants], 'Mixed Categories'));
+            nonDistinctMatches.push(...generateMatches([...nonDistinctContestants], t('register.mixedCategories')));
         }
 
         // Combine distinct and non-distinct matches
@@ -161,7 +153,7 @@ const ContestantRegistration: React.FC<ContestantRegistrationProps> = ({ onCanSt
             );
 
             if (isDuplicate) {
-                alert('Ez a név már regisztrálva van!');
+                alert(t('register.alreadyRegistered'));
                 return;
             }
 
@@ -194,14 +186,14 @@ const ContestantRegistration: React.FC<ContestantRegistrationProps> = ({ onCanSt
     };
 
     const handleDeleteConfirm = (id: string) => {
-        setModalMessage('Biztosan törölni szeretné ezt a versenyzőt?');
+        setModalMessage(t('register.deleteContestantConfirmation'));
         setModalAction(() => () => {
             setContestants(contestants.filter((contestant) => contestant.id !== id));
             setIsModalOpen(false);
         });
         setIsModalOpen(true);
     };
-
+    // eslint-disable-next-line
     const handleDelete = (id: string) => {
         const updatedContestants = contestants.filter((contestant) => contestant.id !== id);
         setContestants(updatedContestants);
@@ -214,7 +206,7 @@ const ContestantRegistration: React.FC<ContestantRegistrationProps> = ({ onCanSt
 
     const getContestantName = (id: string): string => {
         const contestant = contestants.find((c) => c.id === id);
-        return contestant ? contestant.name : 'Unknown';
+        return contestant ? contestant.name : t('tournament.unknownContestant');
     };
 
     const groupedContestants = contestants.reduce((groups: Record<string, typeof contestants>, contestant) => {
@@ -281,13 +273,13 @@ const ContestantRegistration: React.FC<ContestantRegistrationProps> = ({ onCanSt
 
     return (
         <div className="contestant-registration-page">
-            <h2 className="contestant-registration-title">Versenyzők Regisztrációja</h2>
-            <h3 className="contestant-registration-title">Ütemezett mérkőzések: {matches.length}</h3>
+            <h2 className="contestant-registration-title">{t('register.contestantRegiestrationTitle')}</h2>
+            <h3 className="contestant-registration-title">{t('register.scheduledMatchesTitle')}: {matches.length}</h3>
             <form className="contestant-registration-form" onSubmit={handleRegister}>
                 <input
                     type="text"
                     className="contestant-registration-input"
-                    placeholder="Versenyző neve"
+                    placeholder={t('register.contestantNamePlaceholder')}
                     value={contestantName}
                     onChange={(e) => setContestantName(e.target.value)}
                     required
@@ -298,7 +290,7 @@ const ContestantRegistration: React.FC<ContestantRegistrationProps> = ({ onCanSt
                     onChange={(e) => setCategory(e.target.value)}
                     required
                 >
-                    <option value="">Kategória kiválasztása</option>
+                    <option value="">{t('register.selectCategory')}</option>
                     {categories.map((cat) => (
                         <option key={cat.id} value={cat.name}>
                             {cat.name}
@@ -306,7 +298,7 @@ const ContestantRegistration: React.FC<ContestantRegistrationProps> = ({ onCanSt
                     ))}
                 </select>
                 <button type="submit" className="contestant-registration-button contestant-registration-add-button">
-                    {editingId !== null ? 'Mentés' : 'Regisztrálás'}
+                    {editingId !== null ? t('register.save') : t('register.registerContestant')}
                 </button>
                 {editingId !== null && (
                     <button
@@ -314,13 +306,13 @@ const ContestantRegistration: React.FC<ContestantRegistrationProps> = ({ onCanSt
                         className="contestant-registration-button contestant-registration-cancel-button"
                         onClick={handleCancelEdit}
                     >
-                        Mégse
+                        {t('register.cancel')}
                     </button>
                 )}
             </form>
 
             {/* Multi-Column Table for Contestants */}
-            <h3 className="contestant-list-title">Regisztrált Versenyzők</h3>
+            <h3 className="contestant-list-title">{t('register.registeredContestantsTitle')}</h3>
             <div className="contestant-table-container">
                 {categories.map((cat) => (
                     <div key={cat.id} className="contestant-table-column">
@@ -328,9 +320,9 @@ const ContestantRegistration: React.FC<ContestantRegistrationProps> = ({ onCanSt
                         <table className="contestant-table">
                             <thead>
                                 <tr>
-                                    <th>Név</th>
-                                    <th>Pontok</th>
-                                    <th>Műveletek</th>
+                                    <th>{t('register.contestantName')}</th>
+                                    <th>{t('register.contestantPoints')}</th>
+                                    <th>{t('register.contestantActions')}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -350,13 +342,13 @@ const ContestantRegistration: React.FC<ContestantRegistrationProps> = ({ onCanSt
                                                     className="contestant-list-button contestant-list-edit-button"
                                                     onClick={() => handleEdit(contestant.id)}
                                                 >
-                                                    Szerkesztés
+                                                    {t('register.edit')}
                                                 </button>
                                                 <button
                                                     className="contestant-list-button contestant-list-delete-button"
                                                     onClick={() => handleDeleteConfirm(contestant.id)}
                                                 >
-                                                    Törlés
+                                                    {t('register.delete')}
                                                 </button>
                                             </td>
                                         </tr>
@@ -368,7 +360,7 @@ const ContestantRegistration: React.FC<ContestantRegistrationProps> = ({ onCanSt
             </div>
 
             {/* List of Matches */}
-            <h3 className="match-list-title">Ütemezett Mérkőzések</h3>
+            <h3 className="match-list-title">{t('register.scheduledMatchesTitle')}</h3>
             <ul className="match-list">
                 {matches.map((match) => (
                     <li key={match.id} className="match-list-item">
@@ -388,8 +380,8 @@ const ContestantRegistration: React.FC<ContestantRegistrationProps> = ({ onCanSt
 
             {JSON.parse(localStorage.getItem('contestants') || '[]').length !== 0 && isContestantModalOpen && selectedContestant && (
                 <Modal onClose={() => setIsContestantModalOpen(false)}>
-                    <h3>Matches for {selectedContestant.name}</h3>
-                    <h4>Finished Matches</h4>
+                    <h3>{selectedContestant.name} {t('register.matchesfor')}</h3>
+                    <h4>{t('tournament.finishedMatchesTitle')}</h4>
                     <ul>
                         {finishedMatches
                             .filter(
@@ -403,13 +395,13 @@ const ContestantRegistration: React.FC<ContestantRegistrationProps> = ({ onCanSt
                                     <li key={match.id}>
                                         {getContestantName(match.player1)} vs {getContestantName(match.player2)} -{' '}
                                         <span style={{ color: isWinner ? 'green' : 'red' }}>
-                                            Winner: {getContestantName(match.winner || '')}
+                                            {t('tournament.winnerColumn')}: {getContestantName(match.winner || '')}
                                         </span>
                                     </li>
                                 );
                             })}
                     </ul>
-                    <h4>Pending Matches</h4>
+                    <h4>{t('tournament.pendingMatchesTitle')}</h4>
                     <ul>
                         {scheduledMatches
                             .filter(
