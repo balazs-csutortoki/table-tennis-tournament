@@ -1,13 +1,13 @@
 {
   "files": {
     "main.css": "/table-tennis-tournament/static/css/main.c914f6b3.css",
-    "main.js": "/table-tennis-tournament/static/js/main.0fca6a7b.js",
+    "main.js": "/table-tennis-tournament/static/js/main.fd54b13b.js",
     "index.html": "/table-tennis-tournament/index.html",
     "main.c914f6b3.css.map": "/table-tennis-tournament/static/css/main.c914f6b3.css.map",
-    "main.0fca6a7b.js.map": "/table-tennis-tournament/static/js/main.0fca6a7b.js.map"
+    "main.fd54b13b.js.map": "/table-tennis-tournament/static/js/main.fd54b13b.js.map"
   },
   "entrypoints": [
     "static/css/main.c914f6b3.css",
-    "static/js/main.0fca6a7b.js"
+    "static/js/main.fd54b13b.js"
   ]
 }
