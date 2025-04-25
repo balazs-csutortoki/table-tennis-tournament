@@ -4,18 +4,12 @@ import { generateGUID } from '../utils';
 import i18n from 'i18next';
 import { initReactI18next, useTranslation } from 'react-i18next';
 import hu from '../i18n/hu.json';
+import { Contestant } from '../types';
 
 interface Category {
     id: string;
     name: string;
     isDistinct: boolean;
-}
-
-interface Contestant {
-    id: string;
-    name: string;
-    category: string;
-    points: number;
 }
 
 interface Match {

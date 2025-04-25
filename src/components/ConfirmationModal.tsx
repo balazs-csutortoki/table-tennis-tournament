@@ -19,7 +19,7 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({ message, onConfir
                         {t('register.yes')}
                     </button>
                     <button className="confirmation-modal-button cancel-button" onClick={onCancel}>
-                        {t('register.yes')}
+                        {t('register.no')}
                     </button>
                 </div>
             </div>

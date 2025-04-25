@@ -3,6 +3,7 @@ export interface Contestant {
     name: string;
     category: string;
     points: number;
+    deleted: boolean;
 }
 export interface Match {
     id: string;

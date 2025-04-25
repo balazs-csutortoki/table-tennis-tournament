@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './OngoingMatches.css'; // Add styles for the component
 import Modal from './Modal'; // Assume a reusable Modal component exists
 import { useSettingsContext } from '../context/SettingsContext';
-import { Match } from '../types';
+import { Contestant, Match } from '../types';
 import { useTranslation } from 'react-i18next';
 
 const OngoingMatches: React.FC = () => {
@@ -30,7 +30,7 @@ const OngoingMatches: React.FC = () => {
 
     const getContestantName = (id: string) => {
         const contestant = contestants.find((c) => c.id === id);
-        return contestant ? contestant.name : t('tournamnet.unknownContestant');
+        return contestant ? contestant.name : t('tournament.unknownContestant');
     };
 
     const assignMatchesToFreeTables = () => {
@@ -48,7 +48,15 @@ const OngoingMatches: React.FC = () => {
             (tableNumber) => !latestOngoingMatches.some((match: Match) => match.tableNumber === tableNumber)
         );
 
-        let matchesToAssign = scheduledMatchesFromStorage.filter(
+        // filter the scheduled matches that have contestant with deleted status
+        const filteredScheduledMatches = scheduledMatchesFromStorage.filter((match: Match) => {
+            const player1 = contestants.find((contestant) => contestant.id === match.player1);
+            const player2 = contestants.find((contestant) => contestant.id === match.player2);
+            return player1 && !player1.deleted && player2 && !player2.deleted;
+        }
+        );
+
+        let matchesToAssign = filteredScheduledMatches.filter(
             (match: Match) =>
                 !ongoingContestants.has(match.player1) &&
                 !ongoingContestants.has(match.player2) &&
@@ -76,7 +84,20 @@ const OngoingMatches: React.FC = () => {
     };
 
     const finishMatch = (tableNumber: number, winner: string) => {
+        const recentcontestants: Contestant[] = JSON.parse(localStorage.getItem('contestants') || '[]');
+
         const match = ongoingMatches.find((m) => m.tableNumber === tableNumber);
+        let invalidMatch = false;
+        // check if match contains contestant that no longer exists
+        if (match) {
+            const player1 = recentcontestants.find((contestant) => contestant.id === match.player1);
+            const player2 = recentcontestants.find((contestant) => contestant.id === match.player2);
+            if (!player1 || !player2) {
+                invalidMatch = true;
+            }
+        }
+
+
         if (match) {
             // Update ongoingMatches state
             const updatedOngoingMatches = ongoingMatches.filter((m) => m.tableNumber !== tableNumber);
@@ -86,14 +107,17 @@ const OngoingMatches: React.FC = () => {
             localStorage.setItem('ongoingMatches', JSON.stringify(updatedOngoingMatches));
 
             // Add the match to finishedMatches state
+            if (invalidMatch) {
+                assignMatchesToFreeTables();
+                return;
+            }
+
+
             const updatedFinishedMatches = [...finishedMatches, { ...match, winner }];
             setFinishedMatches(updatedFinishedMatches);
 
-            // Update localStorage for finishedMatches
-            localStorage.setItem('finishedMatches', JSON.stringify(updatedFinishedMatches));
-
             //Add 1 to the point of the winner contestant
-            const updatedContestants = contestants.map((contestant) =>
+            const updatedContestants = recentcontestants.map((contestant) =>
                 contestant.id === winner
                     ? { ...contestant, points: (contestant.points || 0) + 1 }
                     : contestant

@@ -62,7 +62,7 @@ const ContestantRegistration: React.FC<ContestantRegistrationProps> = ({ onCanSt
 
             // Add a dummy contestant if the number of contestants is odd
             if (totalContestants % 2 !== 0) {
-                group.push({ id: 'dummy', name: 'Dummy', category: categoryName, points: 0 });
+                group.push({ id: 'dummy', name: 'Dummy', category: categoryName, points: 0, deleted: false });
             }
 
             // Create a round-robin schedule
@@ -168,7 +168,7 @@ const ContestantRegistration: React.FC<ContestantRegistrationProps> = ({ onCanSt
                 setEditingId(null);
             } else {
                 // Add a new contestant with a GUID
-                setContestants([...contestants, { id: generateGUID(), name: contestantName, category, points: 0 }]);
+                setContestants([...contestants, { id: generateGUID(), name: contestantName, category, points: 0, deleted: false }]);
             }
 
             // Reset the form with a new random name, but keep the last selected category
@@ -188,7 +188,29 @@ const ContestantRegistration: React.FC<ContestantRegistrationProps> = ({ onCanSt
     const handleDeleteConfirm = (id: string) => {
         setModalMessage(t('register.deleteContestantConfirmation'));
         setModalAction(() => () => {
-            setContestants(contestants.filter((contestant) => contestant.id !== id));
+            const updatedFinishedMatches: Match[] = JSON.parse(localStorage.getItem('finishedMatches') || '[]');
+
+            //if contestant id is already in finished matches, set the deleted property to true
+            if (updatedFinishedMatches.some((match) => match.player1 === id || match.player2 === id)) {
+                const updatedContestants = contestants.map((contestant) =>
+                    contestant.id === id
+                        ? { ...contestant, deleted: true, points: 0 }
+                        : contestant
+                );
+                // go through the updatedcontestants and recalculate the points based on the finished matches
+                updatedContestants.forEach((contestant) => {
+                    const contestantMatches = updatedFinishedMatches.filter(
+                        (match) => match.winner === contestant.id && match.player1 !== id && match.player2 !== id
+                    );
+                    if (contestant.deleted === false) {
+                        contestant.points = contestantMatches.length;
+                    }
+                });
+                localStorage.setItem('contestants', JSON.stringify(updatedContestants));
+                setContestants(updatedContestants);
+            } else {
+                setContestants(contestants.filter((contestant) => contestant.id !== id));
+            }
             setIsModalOpen(false);
         });
         setIsModalOpen(true);
@@ -331,7 +353,7 @@ const ContestantRegistration: React.FC<ContestantRegistrationProps> = ({ onCanSt
                                     .map((contestant, index) => (
                                         <tr key={contestant.id}>
                                             <td style={{ fontWeight: index === 0 ? 'bold' : 'normal' }}><span
-                                                className="clickable-contestant-name"
+                                                className={contestant.deleted ? 'clickable-contestant-name-deleted' : 'clickable-contestant-name'}
                                                 onClick={() => openContestantModal(contestant.id)}
                                             >
                                                 {contestant.name}
@@ -391,8 +413,14 @@ const ContestantRegistration: React.FC<ContestantRegistrationProps> = ({ onCanSt
                             )
                             .map((match: Match) => {
                                 const isWinner = match.winner === selectedContestant.id;
+                                //check if match contains deleted contestants
+                                const isDeleted = contestants.some(
+                                    (contestant) =>
+                                        (contestant.id === match.player1 || contestant.id === match.player2) &&
+                                        contestant.deleted
+                                );
                                 return (
-                                    <li key={match.id}>
+                                    <li key={match.id} className={isDeleted ? 'clickable-contestant-name-deleted' : ''}>
                                         {getContestantName(match.player1)} vs {getContestantName(match.player2)} -{' '}
                                         <span style={{ color: isWinner ? 'green' : 'red' }}>
                                             {t('tournament.winnerColumn')}: {getContestantName(match.winner || '')}
