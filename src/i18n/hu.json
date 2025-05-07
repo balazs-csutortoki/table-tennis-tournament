@@ -35,7 +35,8 @@
     "yes": "Igen",
     "no": "Nem",
     "delete": "Törlés",
-    "matchesfor": "mérkőzései"
+    "matchesfor": "mérkőzései",
+    "backToHome": "Vissza a főoldalra"
   },
   "tournament": {
     "unknownContestant": "Ismeretlen",
@@ -52,6 +53,7 @@
     "player": "Játékos",
     "categoryColumn": "Kategória",
     "winnerColumn": "Nyertes",
-    "change": "Módosítás"
+    "change": "Módosítás",
+    "tableColumn": "Asztal"
   }
 }

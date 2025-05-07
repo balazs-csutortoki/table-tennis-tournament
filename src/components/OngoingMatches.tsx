@@ -115,7 +115,7 @@ const OngoingMatches: React.FC = () => {
 
             const updatedFinishedMatches = [...finishedMatches, { ...match, winner }];
             setFinishedMatches(updatedFinishedMatches);
-
+            localStorage.setItem('finishedMatches', JSON.stringify(updatedFinishedMatches));
             //Add 1 to the point of the winner contestant
             const updatedContestants = recentcontestants.map((contestant) =>
                 contestant.id === winner
@@ -203,22 +203,22 @@ const OngoingMatches: React.FC = () => {
                     const match = ongoingMatches.find((m) => m.tableNumber === tableNumber);
                     return (
                         <div key={tableNumber} className="table">
-                            <h3>{tableNumber}. {t('tournament.table')}</h3>
+                            <h1>{tableNumber}. {t('tournament.table')}</h1>
                             {match ? (
                                 <div>
-                                    <p>
+                                    <p className="match-info">
                                         {getContestantName(match.player1)} vs {getContestantName(match.player2)} ({match.category})
                                     </p>
                                     <div className="winner-buttons">
                                         <button
                                             onClick={() => finishMatch(tableNumber, match.player1)}
                                         >
-                                            {getContestantName(match.player1)} {t('tournament.winner')}
+                                            {getContestantName(match.player1)} {/*t('tournament.winner')*/}
                                         </button>
                                         <button
                                             onClick={() => finishMatch(tableNumber, match.player2)}
                                         >
-                                            {getContestantName(match.player2)} {t('tournament.winner')}
+                                            {getContestantName(match.player2)} {/*t('tournament.winner')*/}
                                         </button>
                                     </div>
                                     <button
@@ -238,39 +238,63 @@ const OngoingMatches: React.FC = () => {
                 })}
             </div>
 
+
+
             {isModalOpen && selectedTable && (
                 <Modal onClose={() => setIsModalOpen(false)}>
                     <h3>{t('tournament.newMatchSelection')}</h3>
                     <input
                         type="text"
-                        placeholder="Search for a contestant"
+                        placeholder={t('tournament.searchPlaceholder')}
                         onChange={(e) => setSearchQuery(e.target.value.toLowerCase())}
                         className="search-input"
                     />
-                    <ul>
-                        {scheduledMatches
-                            .filter((match) =>
-                                getContestantName(match.player1).toLowerCase().includes(searchQuery) ||
-                                getContestantName(match.player2).toLowerCase().includes(searchQuery)
-                            )
-                            .map((match) => (
-                                <li key={match.id}>
-                                    {getContestantName(match.player1)} vs {getContestantName(match.player2)} ({match.category})
-                                    <button onClick={() => changeMatch(match)}>{t('tournament.select')}</button>
-                                </li>
-                            ))}
-                    </ul>
+                    <div className="scrollable-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>{t('tournament.player')} 1</th>
+                                    <th>{t('tournament.player')} 2</th>
+                                    <th>{t('tournament.categoryColumn')}</th>
+                                    <th>{t('register.contestantActions')}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {scheduledMatches
+                                    .filter((match) =>
+                                        getContestantName(match.player1).toLowerCase().includes(searchQuery) ||
+                                        getContestantName(match.player2).toLowerCase().includes(searchQuery)
+                                    )
+                                    .map((match) => (
+                                        <tr key={match.id}>
+                                            <td>{getContestantName(match.player1)}</td>
+                                            <td>{getContestantName(match.player2)}</td>
+                                            <td>{match.category}</td>
+                                            <td>
+                                                <button
+                                                    className="select-match-button"
+                                                    onClick={() => changeMatch(match)}
+                                                >
+                                                    {t('tournament.select')}
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                            </tbody>
+                        </table>
+                    </div>
                 </Modal>
             )}
 
             {isModalOpen && selectedFinishedMatch && (
                 <Modal onClose={() => setIsModalOpen(false)}>
                     <h3>{t('tournament.changeWinner')}</h3>
-                    <p>
+                    <p className="match-info">
                         {getContestantName(selectedFinishedMatch.player1)} vs {getContestantName(selectedFinishedMatch.player2)} ({selectedFinishedMatch.category})
                     </p>
-                    <div>
+                    <div className="winner-buttons">
                         <button
+                            className="winner-button"
                             onClick={() => {
                                 changeWinner(selectedFinishedMatch.id, selectedFinishedMatch.player1);
                                 setIsModalOpen(false);
@@ -279,6 +303,7 @@ const OngoingMatches: React.FC = () => {
                             {getContestantName(selectedFinishedMatch.player1)} {t('tournament.winner')}
                         </button>
                         <button
+                            className="winner-button"
                             onClick={() => {
                                 changeWinner(selectedFinishedMatch.id, selectedFinishedMatch.player2);
                                 setIsModalOpen(false);
@@ -297,7 +322,9 @@ const OngoingMatches: React.FC = () => {
                         <th>{t('tournament.player')} 1</th>
                         <th>{t('tournament.player')} 2</th>
                         <th>{t('tournament.categoryColumn')}</th>
+                        <th>{t('tournament.tableColumn')}</th>
                         <th>{t('tournament.winnerColumn')}</th>
+                        <th>{t('register.contestantActions')}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -306,6 +333,7 @@ const OngoingMatches: React.FC = () => {
                             <td>{getContestantName(match.player1)}</td>
                             <td>{getContestantName(match.player2)}</td>
                             <td>{match.category}</td>
+                            <td>{match.tableNumber}</td>
                             <td>{getContestantName(match.winner || '')}</td>
                             <td>
                                 <button

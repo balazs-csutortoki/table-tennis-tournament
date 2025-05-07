@@ -6,6 +6,7 @@ import ConfirmationModal from './ConfirmationModal';
 import { Contestant, Match } from '../types';
 import Modal from './Modal';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 
 
 const noOp = () => {
@@ -39,7 +40,15 @@ const ContestantRegistration: React.FC<ContestantRegistrationProps> = ({ onCanSt
     const [finishedMatches, setFinishedMatches] = useState<Match[]>(() =>
         JSON.parse(localStorage.getItem('finishedMatches') || '[]')
     );
+    //set matches to empty array if local storage is empty
+    /*if (matches.length === 3) {
+        const storedMatches = JSON.parse(localStorage.getItem('scheduledMatches') || '[]');
+        if (storedMatches.length > 0) {
+            setMatches(storedMatches);
+        }
+    }*/
 
+    //setScheduledMatches([]);
     // Function to schedule matches
     const scheduleMatches = () => {
         // Step 1: Map existing match IDs to contestant pairs
@@ -382,7 +391,7 @@ const ContestantRegistration: React.FC<ContestantRegistrationProps> = ({ onCanSt
             </div>
 
             {/* List of Matches */}
-            <h3 className="match-list-title">{t('register.scheduledMatchesTitle')}</h3>
+            <h3 className="match-list-title">{t('register.scheduledMatchesTitle')} ({matches.length})</h3>
             <ul className="match-list">
                 {matches.map((match) => (
                     <li key={match.id} className="match-list-item">
@@ -451,6 +460,11 @@ const ContestantRegistration: React.FC<ContestantRegistrationProps> = ({ onCanSt
                     </ul>
                 </Modal>
             )}
+            <footer className="contestant-registration-footer">
+                <Link to="/" className="root-page-link">
+                    {t('register.backToHome')}
+                </Link>
+            </footer>
         </div>
     );
 };

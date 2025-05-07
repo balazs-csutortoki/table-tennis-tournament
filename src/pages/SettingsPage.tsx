@@ -16,6 +16,7 @@ const SettingsPage: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalAction, setModalAction] = useState<() => void>(noOp);
     const [modalMessage, setModalMessage] = useState('');
+    const { setMatches } = useSettingsContext();
 
     const handleAddCategory = () => {
         setCategories([...categories, { id: generateGUID(), name: '', isDistinct: false }]);
@@ -48,6 +49,8 @@ const SettingsPage: React.FC = () => {
             ]);
             setTableCount(2);
             setContestants([]);
+            // reset scheduledmatches
+            setMatches([]);
             setIsModalOpen(false);
         });
         setIsModalOpen(true);

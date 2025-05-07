@@ -5,7 +5,6 @@ import OngoingMatches from '../components/OngoingMatches';
 const TournamentPage: React.FC = () => {
     return (
         <div>
-            <h1>Verseny Oldal</h1>
             <OngoingMatches />
             <ContestantRegistration />
         </div>

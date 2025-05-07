@@ -8,13 +8,17 @@ const RegistrationPage: React.FC = () => {
     const [canStartTournament, setCanStartTournament] = useState(false);
     const { t } = useTranslation();
 
+    const handleStartTournament = () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' }); // Scroll to the top of the page
+    };
+
     return (
         <div>
             <h1>{t('register.pageTitle')}</h1>
             <ContestantRegistration onCanStartTournamentChange={setCanStartTournament} />
             <br />
             <Link to="/tournament">
-                <button className={`start-tournament-button ${!canStartTournament ? 'disabled' : ''}`} disabled={!canStartTournament} >{t('register.startTournament')}</button>
+                <button className={`start-tournament-button ${!canStartTournament ? 'disabled' : ''}`} disabled={!canStartTournament} onClick={handleStartTournament} >{t('register.startTournament')}</button>
             </Link>
         </div>
     );
