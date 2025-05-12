@@ -131,6 +131,8 @@ const OngoingMatches: React.FC = () => {
     };
 
     const openChangeMatchModal = (tableNumber: number) => {
+        //clear search query
+        setSearchQuery('');
         setSelectedTable(tableNumber);
         setSelectedFinishedMatch(null);
         setIsModalOpen(true);
@@ -140,7 +142,9 @@ const OngoingMatches: React.FC = () => {
         if (selectedTable !== null) {
             //the currently ongoing match will be added to the scheduled matches
             const currentMatch = ongoingMatches.find((match) => match.tableNumber === selectedTable);
-            if (currentMatch) {
+            //only add to the scheduled matches if the match is not already in the scheduled matches
+            const currentMatchAlreadyScheduled = scheduledMatches.find((match) => match.id === currentMatch?.id);
+            if (currentMatch && !currentMatchAlreadyScheduled) {
                 setScheduledMatches((prev) => [...prev, currentMatch]);
             }
 
@@ -261,10 +265,36 @@ const OngoingMatches: React.FC = () => {
                             </thead>
                             <tbody>
                                 {scheduledMatches
-                                    .filter((match) =>
-                                        getContestantName(match.player1).toLowerCase().includes(searchQuery) ||
-                                        getContestantName(match.player2).toLowerCase().includes(searchQuery)
-                                    )
+                                    .filter((match) => {
+                                        // Exclude matches with contestants in ongoing matches
+
+                                        const finishedMatchesformatchchange = JSON.parse(localStorage.getItem('finishedMatches') || '[]');
+                                        const ongoingMatchesformatchchange = JSON.parse(localStorage.getItem('ongoingMatches') || '[]');
+                                        // current ongoing match on the table
+                                        const currentOngoingMatch: Match = ongoingMatchesformatchchange.find((m: Match) => m.tableNumber === selectedTable);
+                                        // filter out the current ongoing match
+                                        const filteredOngoingMatches = ongoingMatchesformatchchange.filter((m: Match) => m.tableNumber !== selectedTable);
+                                        const allMatches = [...finishedMatchesformatchchange, ...ongoingMatchesformatchchange];
+                                        //match is not in allmatches
+                                        const isMatchInAllMatches: boolean = allMatches.some((m: Match) => m.id === match.id);
+
+                                        const ongoingContestants = new Set(
+                                            filteredOngoingMatches.flatMap((ongoingMatch: Match) => [ongoingMatch.player1, ongoingMatch.player2])
+                                        );
+
+
+                                        const isPlayer1InOngoing = ongoingContestants.has(match.player1);
+                                        const isPlayer2InOngoing = ongoingContestants.has(match.player2);
+
+                                        return (
+                                            match.id !== currentOngoingMatch?.id &&
+                                            !isMatchInAllMatches &&
+                                            !isPlayer1InOngoing &&
+                                            !isPlayer2InOngoing && (
+                                                getContestantName(match.player1).toLowerCase().includes(searchQuery) ||
+                                                getContestantName(match.player2).toLowerCase().includes(searchQuery))
+                                        );
+                                    })
                                     .map((match) => (
                                         <tr key={match.id}>
                                             <td>{getContestantName(match.player1)}</td>

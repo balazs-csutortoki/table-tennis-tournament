@@ -54,6 +54,7 @@
     "categoryColumn": "Kategória",
     "winnerColumn": "Nyertes",
     "change": "Módosítás",
-    "tableColumn": "Asztal"
+    "tableColumn": "Asztal",
+    "searchPlaceholder": "Keresés"
   }
 }

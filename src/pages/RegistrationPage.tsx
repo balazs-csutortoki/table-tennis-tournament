@@ -14,7 +14,7 @@ const RegistrationPage: React.FC = () => {
 
     return (
         <div>
-            <h1>{t('register.pageTitle')}</h1>
+
             <ContestantRegistration onCanStartTournamentChange={setCanStartTournament} />
             <br />
             <Link to="/tournament">

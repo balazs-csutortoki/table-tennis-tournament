@@ -25,12 +25,18 @@ const ContestantRegistration: React.FC<ContestantRegistrationProps> = ({ onCanSt
     const [modalMessage, setModalMessage] = useState('');
     const [selectedContestant, setSelectedContestant] = useState<Contestant | null>(null);
     const [isContestantModalOpen, setIsContestantModalOpen] = useState(false);
+
+    const [isMatchesTableCollapsed, setIsMatchesTableCollapsed] = useState(true); // State to toggle table visibility
+
+    const toggleMatchesTable = () => {
+        setIsMatchesTableCollapsed(!isMatchesTableCollapsed);
+    };
     // List of random first names
     const randomNames = ['John', 'Jane', 'Alice', 'Bob', 'Charlie', 'Diana', 'Eve', 'Frank', 'Grace', 'Hank'];
 
     // State for contestant name and category
-    const [contestantName, setContestantName] = useState(
-        `${randomNames[Math.floor(Math.random() * randomNames.length)]} ${Math.floor(Math.random() * 90 + 10)}`
+    const [contestantName, setContestantName] = useState(''
+        //`${randomNames[Math.floor(Math.random() * randomNames.length)]} ${Math.floor(Math.random() * 90 + 10)}`
     );
     const [category, setCategory] = useState('');
     const [editingId, setEditingId] = useState<string | null>(null); // Use GUID for editing
@@ -118,6 +124,8 @@ const ContestantRegistration: React.FC<ContestantRegistrationProps> = ({ onCanSt
 
         // Combine distinct and non-distinct matches
         const mergedMatches = [...distinctMatches, ...nonDistinctMatches];
+        //Randomize the order of matches
+        mergedMatches.sort(() => Math.random() - 0.5);
 
         // Step 3: Reassign original match IDs
         const updatedMatches = mergedMatches.map((match) => {
@@ -181,7 +189,8 @@ const ContestantRegistration: React.FC<ContestantRegistrationProps> = ({ onCanSt
             }
 
             // Reset the form with a new random name, but keep the last selected category
-            setContestantName(`${randomNames[Math.floor(Math.random() * randomNames.length)]} ${Math.floor(Math.random() * 90 + 10)}`);
+            //setContestantName(`${randomNames[Math.floor(Math.random() * randomNames.length)]} ${Math.floor(Math.random() * 90 + 10)}`);
+            setContestantName('');
         }
     };
 
@@ -232,7 +241,8 @@ const ContestantRegistration: React.FC<ContestantRegistrationProps> = ({ onCanSt
 
     const handleCancelEdit = () => {
         setEditingId(null);
-        setContestantName(`${randomNames[Math.floor(Math.random() * randomNames.length)]} ${Math.floor(Math.random() * 90 + 10)}`);
+        setContestantName('');
+        //  setContestantName(`${randomNames[Math.floor(Math.random() * randomNames.length)]} ${Math.floor(Math.random() * 90 + 10)}`);
     };
 
     const getContestantName = (id: string): string => {
@@ -391,15 +401,23 @@ const ContestantRegistration: React.FC<ContestantRegistrationProps> = ({ onCanSt
             </div>
 
             {/* List of Matches */}
-            <h3 className="match-list-title">{t('register.scheduledMatchesTitle')} ({matches.length})</h3>
-            <ul className="match-list">
-                {matches.map((match) => (
-                    <li key={match.id} className="match-list-item">
-                        {contestants.find((c) => c.id === match.player1)?.name} vs{' '}
-                        {contestants.find((c) => c.id === match.player2)?.name} ({match.category})
-                    </li>
-                ))}
-            </ul>
+            {/* Collapsible Scheduled Matches Table */}
+            <h3 className="match-list-title" onClick={toggleMatchesTable}>
+                {t('register.scheduledMatchesTitle')} ({matches.length})
+                <button className="toggle-button">
+                    {isMatchesTableCollapsed ? 'v' : '<'}
+                </button>
+            </h3>
+            {!isMatchesTableCollapsed && (
+                <ul className="match-list">
+                    {matches.map((match) => (
+                        <li key={match.id} className="match-list-item">
+                            {contestants.find((c) => c.id === match.player1)?.name} vs{' '}
+                            {contestants.find((c) => c.id === match.player2)?.name} ({match.category})
+                        </li>
+                    ))}
+                </ul>
+            )}
 
             {isModalOpen && (
                 <ConfirmationModal
