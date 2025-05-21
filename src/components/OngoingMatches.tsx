@@ -21,6 +21,10 @@ const OngoingMatches: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedTable, setSelectedTable] = useState<number | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
+    const [isFinishedMatchesTableCollapsed, setIsFinishedMatchesTableCollapsed] = useState(true); // State to toggle table visibility
+    const toggleFinishedMatchesTable = () => {
+        setIsFinishedMatchesTableCollapsed(!isFinishedMatchesTableCollapsed);
+    };
 
     useEffect(() => {
         // localStorage.setItem('scheduledMatches', JSON.stringify(scheduledMatches));
@@ -345,41 +349,48 @@ const OngoingMatches: React.FC = () => {
                 </Modal>
             )}
 
-            <h2>{t('tournament.finishedMatchesTitle')} ({finishedMatches.length})</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>{t('tournament.player')} 1</th>
-                        <th>{t('tournament.player')} 2</th>
-                        <th>{t('tournament.categoryColumn')}</th>
-                        <th>{t('tournament.tableColumn')}</th>
-                        <th>{t('tournament.winnerColumn')}</th>
-                        <th>{t('register.contestantActions')}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {finishedMatches.map((match) => (
-                        <tr key={match.id}>
-                            <td>{getContestantName(match.player1)}</td>
-                            <td>{getContestantName(match.player2)}</td>
-                            <td>{match.category}</td>
-                            <td>{match.tableNumber}</td>
-                            <td>{getContestantName(match.winner || '')}</td>
-                            <td>
-                                <button
-                                    onClick={() => {
-                                        setSelectedFinishedMatch(match);
-                                        setSelectedTable(0);
-                                        setIsModalOpen(true);
-                                    }}
-                                >
-                                    {t('tournament.change')}
-                                </button>
-                            </td>
+            <h3 className="match-list-title" onClick={toggleFinishedMatchesTable}>
+                {t('tournament.finishedMatchesTitle')} ({finishedMatches.length})
+                <button className="toggle-button">
+                    {isFinishedMatchesTableCollapsed ? 'v' : '<'}
+                </button>
+            </h3>
+            {isFinishedMatchesTableCollapsed && (
+                <table>
+                    <thead>
+                        <tr>
+                            <th>{t('tournament.player')} 1</th>
+                            <th>{t('tournament.player')} 2</th>
+                            <th>{t('tournament.categoryColumn')}</th>
+                            <th>{t('tournament.tableColumn')}</th>
+                            <th>{t('tournament.winnerColumn')}</th>
+                            <th>{t('register.contestantActions')}</th>
                         </tr>
-                    ))}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        {finishedMatches.map((match) => (
+                            <tr key={match.id}>
+                                <td>{getContestantName(match.player1)}</td>
+                                <td>{getContestantName(match.player2)}</td>
+                                <td>{match.category}</td>
+                                <td>{match.tableNumber}</td>
+                                <td>{getContestantName(match.winner || '')}</td>
+                                <td>
+                                    <button
+                                        onClick={() => {
+                                            setSelectedFinishedMatch(match);
+                                            setSelectedTable(0);
+                                            setIsModalOpen(true);
+                                        }}
+                                    >
+                                        {t('tournament.change')}
+                                    </button>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            )}
         </div>
     );
 };
