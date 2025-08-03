@@ -4,6 +4,7 @@ export interface Contestant {
     category: string;
     points: number;
     deleted: boolean;
+    paused?: boolean;
 }
 export interface Match {
     id: string;

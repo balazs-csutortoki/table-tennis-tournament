@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef} from 'react';
 import { useSettingsContext } from '../context/SettingsContext';
 import { generateGUID } from '../utils'; // Import the GUID generator
 import './ContestantRegistration.css'; // Import the CSS file
@@ -25,6 +25,7 @@ const ContestantRegistration: React.FC<ContestantRegistrationProps> = ({ onCanSt
     const [modalMessage, setModalMessage] = useState('');
     const [selectedContestant, setSelectedContestant] = useState<Contestant | null>(null);
     const [isContestantModalOpen, setIsContestantModalOpen] = useState(false);
+    const nameInputRef = useRef<HTMLInputElement>(null);
 
     const [isMatchesTableCollapsed, setIsMatchesTableCollapsed] = useState(true); // State to toggle table visibility
 
@@ -160,6 +161,17 @@ const ContestantRegistration: React.FC<ContestantRegistrationProps> = ({ onCanSt
         }
     };
 
+    // Toggle pause state for a contestant
+    const handleTogglePause = (id: string) => {
+        const updatedContestants = contestants.map((contestant) =>
+            contestant.id === id
+                ? { ...contestant, paused: !contestant.paused }
+                : contestant
+        );
+        setContestants(updatedContestants);
+        localStorage.setItem('contestants', JSON.stringify(updatedContestants));
+    };
+
     const handleRegister = (e: React.FormEvent) => {
         e.preventDefault();
         if (contestantName && category) {
@@ -191,6 +203,7 @@ const ContestantRegistration: React.FC<ContestantRegistrationProps> = ({ onCanSt
             // Reset the form with a new random name, but keep the last selected category
             //setContestantName(`${randomNames[Math.floor(Math.random() * randomNames.length)]} ${Math.floor(Math.random() * 90 + 10)}`);
             setContestantName('');
+            nameInputRef.current?.focus();
         }
     };
 
@@ -324,6 +337,7 @@ const ContestantRegistration: React.FC<ContestantRegistrationProps> = ({ onCanSt
                     value={contestantName}
                     onChange={(e) => setContestantName(e.target.value)}
                     required
+                    ref={nameInputRef}
                 />
                 <select
                     className="contestant-registration-select"
@@ -369,15 +383,27 @@ const ContestantRegistration: React.FC<ContestantRegistrationProps> = ({ onCanSt
                             <tbody>
                                 {(groupedContestants[cat.name] || [])
                                     .sort((a, b) => b.points - a.points) // Sort by points in descending order
-                                    .map((contestant, index) => (
+                                    .map((contestant, index) => {
+                                        // Count played matches for this contestant (excluding deleted contestants)
+                                        const finishedMatchesFromStorage = JSON.parse(localStorage.getItem('finishedMatches') || '[]');
+            const playedMatchesCount = finishedMatchesFromStorage.filter(
+                (match: Match) =>
+                    (match.player1 === contestant.id || match.player2 === contestant.id) &&
+                    !contestants.find(c => (c.id === match.player1 || c.id === match.player2) && c.deleted)
+            ).length;
+                                        return (
                                         <tr key={contestant.id}>
                                             <td style={{ fontWeight: index === 0 ? 'bold' : 'normal' }}><span
-                                                className={contestant.deleted ? 'clickable-contestant-name-deleted' : 'clickable-contestant-name'}
+                                                className={contestant.deleted ? 'clickable-contestant-name-deleted' : contestant.paused ? 'clickable-contestant-name-paused' : 'clickable-contestant-name'}
                                                 onClick={() => openContestantModal(contestant.id)}
                                             >
                                                 {contestant.name}
                                             </span></td>
-                                            <td>{contestant.points}</td>
+                                            <td>{contestant.points}
+                                                <span style={{ color: '#888', marginLeft: 6 }}>
+                                                    ({playedMatchesCount})
+                                                </span>
+                                            </td>
                                             <td>
                                                 <button
                                                     className="contestant-list-button contestant-list-edit-button"
@@ -386,14 +412,30 @@ const ContestantRegistration: React.FC<ContestantRegistrationProps> = ({ onCanSt
                                                     {t('register.edit')}
                                                 </button>
                                                 <button
+                                                    className="contestant-list-button contestant-list-pause-button"
+                                                    style={{
+                                                        backgroundColor: contestant.paused ? '#ffb347' : '#06680bff',
+                                                        color: contestant.paused ? '#fff' : '#fff'
+                                                        
+                                                    }}
+                                                    onClick={() => handleTogglePause(contestant.id)}
+                                                    type="button"
+                                                >
+                                                    {contestant.paused
+                                                        ? t('register.resume')
+                                                        : t('register.pause')}
+                                                </button>
+                                                <button
                                                     className="contestant-list-button contestant-list-delete-button"
                                                     onClick={() => handleDeleteConfirm(contestant.id)}
                                                 >
                                                     {t('register.delete')}
                                                 </button>
+                                                
                                             </td>
                                         </tr>
-                                    ))}
+                                        );
+                                    })}
                             </tbody>
                         </table>
                     </div>

@@ -38,7 +38,7 @@
 }
 
 .table {
-    border: 1px solid #ccc;
+    border: 14px solid darkgreen;
     border-radius: 8px;
     padding: 20px;
     width: calc(25% - 20px);

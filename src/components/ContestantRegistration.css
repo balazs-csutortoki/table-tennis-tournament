@@ -116,7 +116,10 @@
     background-color: #f44336;
     color: white;
 }
-
+.contestant-list-pause-button {
+    background-color: #f19101;
+    color: white;
+}
 .contestant-list-delete-button:hover {
     background-color: #e53935;
 }
@@ -207,6 +210,10 @@
     /*red text, with text crossed over*/
     color: red;
     text-decoration: line-through;
+}
+.clickable-contestant-name-paused{
+    /*red text, with text crossed over*/
+    color: orange;
 }
 
 .contestant-table th {

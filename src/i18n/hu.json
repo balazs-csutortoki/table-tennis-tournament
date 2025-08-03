@@ -31,12 +31,14 @@
     "contestantName": "Név",
     "contestantPoints": "Pontok",
     "contestantActions": "Műveletek",
-    "edit": "Szerkesztés",
+    "edit": "Szerk",
     "yes": "Igen",
     "no": "Nem",
     "delete": "Törlés",
     "matchesfor": "mérkőzései",
-    "backToHome": "Vissza a főoldalra"
+    "backToHome": "Vissza a főoldalra",
+    "pause": "Szünet",
+    "resume": "Szünet vége"
   },
   "tournament": {
     "unknownContestant": "Ismeretlen",

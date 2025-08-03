@@ -52,13 +52,35 @@ const OngoingMatches: React.FC = () => {
             (tableNumber) => !latestOngoingMatches.some((match: Match) => match.tableNumber === tableNumber)
         );
 
-        // filter the scheduled matches that have contestant with deleted status
+        // filter the scheduled matches that have contestant with deleted or paused status
         const filteredScheduledMatches = scheduledMatchesFromStorage.filter((match: Match) => {
             const player1 = contestants.find((contestant) => contestant.id === match.player1);
             const player2 = contestants.find((contestant) => contestant.id === match.player2);
-            return player1 && !player1.deleted && player2 && !player2.deleted;
+            return player1 && !player1.deleted && !player1.paused && player2 && !player2.deleted && !player2.paused;
         }
         );
+
+        // filtered matches will be sorted by the sum of finished matches of the contestants
+        filteredScheduledMatches.sort((a: Match, b: Match) => { 
+           /* const player1A = contestants.find((contestant) => contestant.id === a.player1);
+            const player2A = contestants.find((contestant) => contestant.id === a.player2);
+            const player1B = contestants.find((contestant) => contestant.id === b.player1);
+            const player2B = contestants.find((contestant) => contestant.id === b.player2);
+            */
+            const finishedMatchesA = finishedMatchesFromStorage.filter(
+                (match: Match) =>
+                    match.player1 === a.player1 || match.player2 === a.player1 ||
+                    match.player1 === a.player2 || match.player2 === a.player2
+            ).length;
+
+            const finishedMatchesB = finishedMatchesFromStorage.filter(
+                (match: Match) =>
+                    match.player1 === b.player1 || match.player2 === b.player1 ||
+                    match.player1 === b.player2 || match.player2 === b.player2
+            ).length;
+
+            return finishedMatchesA - finishedMatchesB;
+        });
 
         let matchesToAssign = filteredScheduledMatches.filter(
             (match: Match) =>
