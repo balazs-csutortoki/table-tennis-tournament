@@ -10,7 +10,7 @@ export interface Match {
     id: string;
     player1: string; // Contestant ID
     player2: string; // Contestant ID
-    category: string;
+    category: string; // Category ID
     tableNumber?: number;
     winner?: string;
 }

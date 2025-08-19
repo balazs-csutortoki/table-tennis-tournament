@@ -143,6 +143,12 @@
     margin-bottom: 10px;
 }
 
+.match-list-item-deleted {
+    color: red;
+    text-decoration: line-through;
+    text-decoration-color: red;
+}
+
 /* Multi-column layout for contestants */
 .contestant-table-container {
     display: flex;

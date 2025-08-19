@@ -68,17 +68,17 @@ const ContestantRegistration: React.FC<ContestantRegistrationProps> = ({ onCanSt
         // Group contestants by distinct and non-distinct categories
         const distinctCategories = categories.filter((cat) => cat.isDistinct);
         const nonDistinctContestants = contestants.filter((c) =>
-            categories.some((cat) => cat.name === c.category && !cat.isDistinct)
+            categories.some((cat) => cat.id === c.category && !cat.isDistinct)
         );
 
         // Helper function to generate matches for a group of contestants
-        const generateMatches = (group: typeof contestants, categoryName: string) => {
+        const generateMatches = (group: typeof contestants, categoryID: string) => {
             const groupMatches: typeof matches = [];
             const totalContestants = group.length;
 
             // Add a dummy contestant if the number of contestants is odd
             if (totalContestants % 2 !== 0) {
-                group.push({ id: 'dummy', name: 'Dummy', category: categoryName, points: 0, deleted: false });
+                group.push({ id: 'dummy', name: 'Dummy', category: categoryID, points: 0, deleted: false });
             }
 
             // Create a round-robin schedule
@@ -89,15 +89,15 @@ const ContestantRegistration: React.FC<ContestantRegistrationProps> = ({ onCanSt
                     const player2 = group[group.length - 1 - j];
                     if (player1 && player2 && player1.id !== 'dummy' && player2.id !== 'dummy') {
                         if (player1.category !== player2.category) {
-                            categoryName = t('register.mixedCategories');
+                            categoryID = t('register.mixedCategories');
                         } else {
-                            categoryName = player1.category;
+                            categoryID = player1.category;
                         }
                         round.push({
                             id: '', // Placeholder for ID, will be reassigned later
                             player1: player1.id,
                             player2: player2.id,
-                            category: categoryName,
+                            category: categoryID,
                         });
                     }
                 }
@@ -113,8 +113,8 @@ const ContestantRegistration: React.FC<ContestantRegistrationProps> = ({ onCanSt
         // Generate matches for distinct categories
         const distinctMatches: typeof matches = [];
         distinctCategories.forEach((category) => {
-            const categoryContestants = contestants.filter((c) => c.category === category.name);
-            distinctMatches.push(...generateMatches([...categoryContestants], category.name));
+            const categoryContestants = contestants.filter((c) => c.category === category.id);
+            distinctMatches.push(...generateMatches([...categoryContestants], category.id));
         });
 
         // Generate matches for non-distinct categories
@@ -170,6 +170,32 @@ const ContestantRegistration: React.FC<ContestantRegistrationProps> = ({ onCanSt
         );
         setContestants(updatedContestants);
         localStorage.setItem('contestants', JSON.stringify(updatedContestants));
+
+        //get the contestant from the updated contestants
+        const contestant = updatedContestants.find((c) => c.id === id);
+        if (!contestant) return;
+        // get the ongoing matches from local storage
+        const ongoingMatchesFromStorage = JSON.parse(localStorage.getItem('ongoingMatches') || '[]');
+        //get the ongoing match for the contestant
+        const ongoingMatch = ongoingMatchesFromStorage.find(
+            (match: Match) => match.player1 === contestant.id || match.player2 === contestant.id
+        );
+        //remove the ongoing match from the ongoing matches if the contestant is paused
+        if (ongoingMatch) {
+            if (contestant.paused) {
+                // If contestant is paused, remove the match from ongoing matches
+                const updatedOngoingMatches = ongoingMatchesFromStorage.filter(
+                    (match: Match) => match.id !== ongoingMatch.id
+                );
+                localStorage.setItem('ongoingMatches', JSON.stringify(updatedOngoingMatches));
+                window.dispatchEvent(new Event('reassignMatches'));
+
+            } 
+
+        }
+
+        
+
     };
 
     const handleRegister = (e: React.FormEvent) => {
@@ -231,7 +257,11 @@ const ContestantRegistration: React.FC<ContestantRegistrationProps> = ({ onCanSt
                 // go through the updatedcontestants and recalculate the points based on the finished matches
                 updatedContestants.forEach((contestant) => {
                     const contestantMatches = updatedFinishedMatches.filter(
-                        (match) => match.winner === contestant.id && match.player1 !== id && match.player2 !== id
+                        (match) => match.winner === contestant.id &&
+                            ![match.player1, match.player2].some(matchId => {
+                                const c = updatedContestants.find(cont => cont.id === matchId);
+                                return c?.deleted;
+                            })
                     );
                     if (contestant.deleted === false) {
                         contestant.points = contestantMatches.length;
@@ -240,7 +270,45 @@ const ContestantRegistration: React.FC<ContestantRegistrationProps> = ({ onCanSt
                 localStorage.setItem('contestants', JSON.stringify(updatedContestants));
                 setContestants(updatedContestants);
             } else {
+                const afterdeletecontestants = contestants.filter((contestant) => contestant.id !== id); 
+
                 setContestants(contestants.filter((contestant) => contestant.id !== id));
+                localStorage.setItem('contestants', JSON.stringify(afterdeletecontestants));
+            }
+            
+            //get the contestant from the updated contestants
+            //fresh contsestants from local storage
+            const updatedContestants:Contestant[] = JSON.parse(localStorage.getItem('contestants') || '[]');            
+            const contestant = updatedContestants.find((c) => c.id === id);
+            if (!contestant) {
+                //contestant was deleted, remove any ongoing matches related to this contestant
+                const updatedOngoingMatches = JSON.parse(localStorage.getItem('ongoingMatches') || '[]').filter(
+                    (match: Match) => match.player1 !== id && match.player2 !== id
+                );
+                localStorage.setItem('ongoingMatches', JSON.stringify(updatedOngoingMatches));
+                window.dispatchEvent(new Event('reassignMatches'));
+                setIsModalOpen(false);
+                return;
+            }
+            // get the ongoing matches from local storage
+            const ongoingMatchesFromStorage = JSON.parse(localStorage.getItem('ongoingMatches') || '[]');
+            //get the ongoing match for the contestant
+            const ongoingMatch = ongoingMatchesFromStorage.find(
+                (match: Match) => match.player1 === contestant.id || match.player2 === contestant.id
+            );
+            //if ongoingmatch is not found, then search for ongoing matches that contain contestant.id that does not exist in contestants
+
+
+            //remove the ongoing match from the ongoing matches if the contestant is paused
+            if (ongoingMatch) {
+                if (contestant.deleted ) {
+                    // If contestant is paused, remove the match from ongoing matches
+                    const updatedOngoingMatches = ongoingMatchesFromStorage.filter(
+                        (match: Match) => match.id !== ongoingMatch.id
+                    );
+                    localStorage.setItem('ongoingMatches', JSON.stringify(updatedOngoingMatches));
+                    window.dispatchEvent(new Event('reassignMatches'));
+                } 
             }
             setIsModalOpen(false);
         });
@@ -276,7 +344,7 @@ const ContestantRegistration: React.FC<ContestantRegistrationProps> = ({ onCanSt
 
         // Combine all contestants from non-distinct categories into one group
         const nonDistinctContestants = contestants.filter((c) =>
-            categories.some((cat) => cat.name === c.category && !cat.isDistinct)
+            categories.some((cat) => cat.id === c.category && !cat.isDistinct)
         );
 
         // Check if the combined non-distinct group has enough contestants
@@ -290,7 +358,7 @@ const ContestantRegistration: React.FC<ContestantRegistrationProps> = ({ onCanSt
 
         // Check distinct categories
         for (const category of categories.filter((cat) => cat.isDistinct)) {
-            const count = groupedContestants[category.name]?.length || 0;
+            const count = groupedContestants[category.id]?.length || 0;
 
             if (count > 0 && count < 2) {
                 return false;
@@ -328,7 +396,14 @@ const ContestantRegistration: React.FC<ContestantRegistrationProps> = ({ onCanSt
     return (
         <div className="contestant-registration-page">
             <h2 className="contestant-registration-title">{t('register.contestantRegiestrationTitle')}</h2>
-            <h3 className="contestant-registration-title">{t('register.scheduledMatchesTitle')}: {matches.length}</h3>
+            <h3 className="contestant-registration-title">{t('register.scheduledMatchesTitle')}: {matches.filter(
+                (match) =>
+                    !contestants.find(
+                        (c) =>
+                            (c.id === match.player1 || c.id === match.player2) &&
+                            c.deleted
+                    )
+            ).length}</h3>
             <form className="contestant-registration-form" onSubmit={handleRegister}>
                 <input
                     type="text"
@@ -347,7 +422,7 @@ const ContestantRegistration: React.FC<ContestantRegistrationProps> = ({ onCanSt
                 >
                     <option value="">{t('register.selectCategory')}</option>
                     {categories.map((cat) => (
-                        <option key={cat.id} value={cat.name}>
+                        <option key={cat.id} value={cat.id}>
                             {cat.name}
                         </option>
                     ))}
@@ -371,7 +446,7 @@ const ContestantRegistration: React.FC<ContestantRegistrationProps> = ({ onCanSt
             <div className="contestant-table-container">
                 {categories.map((cat) => (
                     <div key={cat.id} className="contestant-table-column">
-                        <h4 className="contestant-table-category">{cat.name} ({groupedContestants[cat.name]?.length || 0})</h4>
+                        <h4 className="contestant-table-category">{cat.name} ({groupedContestants[cat.id]?.length || 0})</h4>
                         <table className="contestant-table">
                             <thead>
                                 <tr>
@@ -381,7 +456,7 @@ const ContestantRegistration: React.FC<ContestantRegistrationProps> = ({ onCanSt
                                 </tr>
                             </thead>
                             <tbody>
-                                {(groupedContestants[cat.name] || [])
+                                {(groupedContestants[cat.id] || [])
                                     .sort((a, b) => b.points - a.points) // Sort by points in descending order
                                     .map((contestant, index) => {
                                         // Count played matches for this contestant (excluding deleted contestants)
@@ -445,20 +520,55 @@ const ContestantRegistration: React.FC<ContestantRegistrationProps> = ({ onCanSt
             {/* List of Matches */}
             {/* Collapsible Scheduled Matches Table */}
             <h3 className="match-list-title" onClick={toggleMatchesTable}>
-                {t('register.scheduledMatchesTitle')} ({matches.length})
+                {t('register.scheduledMatchesTitle')} ({matches.filter(
+                (match) =>
+                    !contestants.find(
+                        (c) =>
+                            (c.id === match.player1 || c.id === match.player2) &&
+                            c.deleted
+                    )
+            ).length})
                 <button className="toggle-button">
                     {isMatchesTableCollapsed ? 'v' : '<'}
                 </button>
             </h3>
             {!isMatchesTableCollapsed && (
                 <ul className="match-list">
-                    {matches.map((match) => (
-                        <li key={match.id} className="match-list-item">
-                            {contestants.find((c) => c.id === match.player1)?.name} vs{' '}
-                            {contestants.find((c) => c.id === match.player2)?.name} ({match.category})
-                        </li>
-                    ))}
-                </ul>
+    {matches
+        .filter(
+            (match) =>
+                !contestants.find(
+                    (c) =>
+                        (c.id === match.player1 || c.id === match.player2) &&
+                        c.deleted
+                )
+        )
+        .map((match) => (
+            <li key={match.id} className="match-list-item">
+                {contestants.find((c) => c.id === match.player1)?.name} vs{' '}
+                {contestants.find((c) => c.id === match.player2)?.name} ({match.category})
+            </li>
+        ))}
+    {matches
+        .filter(
+            (match) =>
+                contestants.find(
+                    (c) =>
+                        (c.id === match.player1 || c.id === match.player2) &&
+                        c.deleted
+                )
+        )
+        .map((match) => (
+            <li key={match.id} className="match-list-item match-list-item-deleted">
+                {contestants.find((c) => c.id === match.player1)?.name} vs{' '}
+                {contestants.find((c) => c.id === match.player2)?.name} ({
+                //match.category
+                //find the category name by id
+                categories.find((cat) => cat.id === match.category)?.name || t('register.mixedCategories')
+                })
+            </li>
+        ))}
+</ul>
             )}
 
             {isModalOpen && (
@@ -514,7 +624,11 @@ const ContestantRegistration: React.FC<ContestantRegistrationProps> = ({ onCanSt
                             )
                             .map((match: Match) => (
                                 <li key={match.id}>
-                                    {getContestantName(match.player1)} vs {getContestantName(match.player2)} ({match.category})
+                                    {getContestantName(match.player1)} vs {getContestantName(match.player2)} ({
+                                    //match.category
+                                    //find the category name by id
+                                    categories.find((cat) => cat.id === match.category)?.name || t('register.mixedCategories')
+                                    })
                                 </li>
                             ))}
                     </ul>

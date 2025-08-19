@@ -4,6 +4,7 @@ import Modal from './Modal'; // Assume a reusable Modal component exists
 import { useSettingsContext } from '../context/SettingsContext';
 import { Contestant, Match } from '../types';
 import { useTranslation } from 'react-i18next';
+import { FaSyncAlt } from 'react-icons/fa'; // Add this import at the top
 
 const OngoingMatches: React.FC = () => {
     const { t } = useTranslation();
@@ -19,6 +20,7 @@ const OngoingMatches: React.FC = () => {
         JSON.parse(localStorage.getItem('finishedMatches') || '[]')
     );
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const { categories } = useSettingsContext();
     const [selectedTable, setSelectedTable] = useState<number | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [isFinishedMatchesTableCollapsed, setIsFinishedMatchesTableCollapsed] = useState(true); // State to toggle table visibility
@@ -37,11 +39,27 @@ const OngoingMatches: React.FC = () => {
         return contestant ? contestant.name : t('tournament.unknownContestant');
     };
 
+    useEffect(() => {
+        const handler = () => assignMatchesToFreeTables();
+        window.addEventListener('reassignMatches', handler);
+        return () => window.removeEventListener('reassignMatches', handler);
+    }, []);
+
     const assignMatchesToFreeTables = () => {
         // Fetch the latest ongoingMatches from localStorage
+        const storageOngoingMatches = JSON.parse(localStorage.getItem('ongoingMatches') || '[]');
+
+        //remove ongong matches for which table number is no longer available
+        const ongoingMatchesToKeep = storageOngoingMatches.filter((match: Match) => match.tableNumber && match.tableNumber <= tableCount);
+        setOngoingMatches(ongoingMatchesToKeep);
+        localStorage.setItem('ongoingMatches', JSON.stringify(ongoingMatchesToKeep));
+
         const latestOngoingMatches = JSON.parse(localStorage.getItem('ongoingMatches') || '[]');
+
         const scheduledMatchesFromStorage = JSON.parse(localStorage.getItem('scheduledMatches') || '[]');
         const finishedMatchesFromStorage = JSON.parse(localStorage.getItem('finishedMatches') || '[]');
+        //get contestants from localStorage
+        const contestantsFromStorage:Contestant[]= JSON.parse(localStorage.getItem('contestants') || '[]');
         const ongoingContestants = new Set(
             latestOngoingMatches.flatMap((match: Match) => [match.player1, match.player2])
         );
@@ -54,19 +72,19 @@ const OngoingMatches: React.FC = () => {
 
         // filter the scheduled matches that have contestant with deleted or paused status
         const filteredScheduledMatches = scheduledMatchesFromStorage.filter((match: Match) => {
-            const player1 = contestants.find((contestant) => contestant.id === match.player1);
-            const player2 = contestants.find((contestant) => contestant.id === match.player2);
+            const player1 = contestantsFromStorage.find((contestant) => contestant.id === match.player1);
+            const player2 = contestantsFromStorage.find((contestant) => contestant.id === match.player2);
             return player1 && !player1.deleted && !player1.paused && player2 && !player2.deleted && !player2.paused;
         }
         );
 
         // filtered matches will be sorted by the sum of finished matches of the contestants
-        filteredScheduledMatches.sort((a: Match, b: Match) => { 
+/*        filteredScheduledMatches.sort((a: Match, b: Match) => { 
            /* const player1A = contestants.find((contestant) => contestant.id === a.player1);
             const player2A = contestants.find((contestant) => contestant.id === a.player2);
             const player1B = contestants.find((contestant) => contestant.id === b.player1);
             const player2B = contestants.find((contestant) => contestant.id === b.player2);
-            */
+            
             const finishedMatchesA = finishedMatchesFromStorage.filter(
                 (match: Match) =>
                     match.player1 === a.player1 || match.player2 === a.player1 ||
@@ -80,6 +98,43 @@ const OngoingMatches: React.FC = () => {
             ).length;
 
             return finishedMatchesA - finishedMatchesB;
+        });
+*/
+
+        filteredScheduledMatches.sort((a: Match, b: Match) => {
+            // Get the most recent finished match index for each contestant in match a
+            const lastFinishedA1 = [...finishedMatchesFromStorage].reverse().findIndex(
+                (match: Match) => match.player1 === a.player1 || match.player2 === a.player1
+            );
+            const lastFinishedA2 = [...finishedMatchesFromStorage].reverse().findIndex(
+                (match: Match) => match.player1 === a.player2 || match.player2 === a.player2
+            );
+            // Get the most recent finished match index for each contestant in match b
+            const lastFinishedB1 = [...finishedMatchesFromStorage].reverse().findIndex(
+                (match: Match) => match.player1 === b.player1 || match.player2 === b.player1
+            );
+            const lastFinishedB2 = [...finishedMatchesFromStorage].reverse().findIndex(
+                (match: Match) => match.player1 === b.player2 || match.player2 === b.player2
+            );
+
+            // Lower index means more recent, -1 means never played
+            // For sorting, we want the contestant who played least recently (highest index or -1) to come first
+            // still, we want to select the match which has both contestants played the least recently
+            /*
+            const sumA = (lastFinishedA1 === -1 ? 0 : lastFinishedA1) + (lastFinishedA2 === -1 ? 0 : lastFinishedA2);
+            const sumB = (lastFinishedB1 === -1 ? 0 : lastFinishedB1) + (lastFinishedB2 === -1 ? 0 : lastFinishedB2);
+            return sumA - sumB;*/
+            //TODO sorting
+            const minA = Math.min(
+                lastFinishedA1 === -1 ? Number.POSITIVE_INFINITY : lastFinishedA1,
+                lastFinishedA2 === -1 ? Number.POSITIVE_INFINITY : lastFinishedA2
+            );
+            const minB = Math.min(
+                lastFinishedB1 === -1 ? Number.POSITIVE_INFINITY : lastFinishedB1,
+                lastFinishedB2 === -1 ? Number.POSITIVE_INFINITY : lastFinishedB2
+            );
+
+            return minA - minB;
         });
 
         let matchesToAssign = filteredScheduledMatches.filter(
@@ -227,7 +282,14 @@ const OngoingMatches: React.FC = () => {
 
     return (
         <div className="ongoing-matches">
-            <h2>{t('tournament.ongoingMatchesTitle')}</h2>
+            <h2>{t('tournament.ongoingMatchesTitle')}     <button
+        className="refresh-button"
+        title={t('tournament.refresh')}
+        style={{ marginLeft: 10, verticalAlign: 'middle', background: 'none', border: 'none', cursor: 'pointer' }}
+        onClick={assignMatchesToFreeTables}
+    >
+        <FaSyncAlt size={20} />
+    </button></h2>
             <div className="tables">
                 {Array.from({ length: tableCount }, (_, i) => i + 1).map((tableNumber) => {
                     const match = ongoingMatches.find((m) => m.tableNumber === tableNumber);
@@ -237,7 +299,10 @@ const OngoingMatches: React.FC = () => {
                             {match ? (
                                 <div>
                                     <p className="match-info">
-                                        {getContestantName(match.player1)} vs {getContestantName(match.player2)} ({match.category})
+                                        {getContestantName(match.player1)} vs {getContestantName(match.player2)} ({
+                                        //match.category
+                                        categories.find((cat) => cat.id === match.category)?.name || t('register.mixedCategories')
+                                        })
                                     </p>
                                     <div className="winner-buttons">
                                         <button
@@ -325,7 +390,8 @@ const OngoingMatches: React.FC = () => {
                                         <tr key={match.id}>
                                             <td>{getContestantName(match.player1)}</td>
                                             <td>{getContestantName(match.player2)}</td>
-                                            <td>{match.category}</td>
+                                            <td>{categories.find((cat) => cat.id === match.category)?.name || t('register.mixedCategories')
+                                                }</td>
                                             <td>
                                                 <button
                                                     className="select-match-button"
@@ -390,27 +456,38 @@ const OngoingMatches: React.FC = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {finishedMatches.map((match) => (
-                            <tr key={match.id}>
-                                <td>{getContestantName(match.player1)}</td>
-                                <td>{getContestantName(match.player2)}</td>
-                                <td>{match.category}</td>
-                                <td>{match.tableNumber}</td>
-                                <td>{getContestantName(match.winner || '')}</td>
-                                <td>
-                                    <button
-                                        onClick={() => {
-                                            setSelectedFinishedMatch(match);
-                                            setSelectedTable(0);
-                                            setIsModalOpen(true);
-                                        }}
-                                    >
-                                        {t('tournament.change')}
-                                    </button>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
+    {finishedMatches.map((match) => {
+        const hasDeletedContestant = contestants.some(
+            (c) =>
+                (c.id === match.player1 || c.id === match.player2) &&
+                c.deleted
+        );
+        return (
+            <tr
+                key={match.id}
+                className={hasDeletedContestant ? 'finished-match-row-deleted' : ''}
+            >
+                <td>{getContestantName(match.player1)}</td>
+                <td>{getContestantName(match.player2)}</td>
+                <td>{categories.find((cat) => cat.id === match.category)?.name || t('register.mixedCategories')
+                    }</td>
+                <td>{match.tableNumber}</td>
+                <td>{getContestantName(match.winner || '')}</td>
+                <td>
+                    <button
+                        onClick={() => {
+                            setSelectedFinishedMatch(match);
+                            setSelectedTable(0);
+                            setIsModalOpen(true);
+                        }}
+                    >
+                        {t('tournament.change')}
+                    </button>
+                </td>
+            </tr>
+        );
+    })}
+</tbody>
                 </table>
             )}
         </div>

@@ -16,7 +16,7 @@ interface Match {
     id: string;
     player1: string; // Contestant ID
     player2: string; // Contestant ID
-    category: string; // Category name
+    category: string; // Category ID
 }
 
 interface SettingsContextType {
