@@ -4,7 +4,8 @@ import Modal from './Modal'; // Assume a reusable Modal component exists
 import { useSettingsContext } from '../context/SettingsContext';
 import { Contestant, Match } from '../types';
 import { useTranslation } from 'react-i18next';
-import { FaSyncAlt } from 'react-icons/fa'; // Add this import at the top
+import { FaSyncAlt } from 'react-icons/fa';
+import type { IconType } from 'react-icons';
 
 const OngoingMatches: React.FC = () => {
     const { t } = useTranslation();
@@ -288,7 +289,7 @@ const OngoingMatches: React.FC = () => {
         style={{ marginLeft: 10, verticalAlign: 'middle', background: 'none', border: 'none', cursor: 'pointer' }}
         onClick={assignMatchesToFreeTables}
     >
-        <FaSyncAlt size={20} />
+        {React.createElement(FaSyncAlt as any, { size: 20 })}
     </button></h2>
             <div className="tables">
                 {Array.from({ length: tableCount }, (_, i) => i + 1).map((tableNumber) => {
