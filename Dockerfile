@@ -33,11 +33,11 @@ server {
         try_files \$uri \$uri/ /index.html;
     }
 
-    # Health check endpoint
+    # Health check endpoint - serve static JSON file
     location /health {
         access_log off;
-        return 200 "healthy\n";
-        add_header Content-Type text/plain;
+        default_type application/json;
+        alias /usr/share/nginx/html/health.json;
     }
 
     # Security headers
