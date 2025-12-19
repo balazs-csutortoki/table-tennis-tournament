@@ -61,5 +61,5 @@ jobs:
         if: github.event_name != 'pull_request'
         with:
           image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}
-          format: 'table'
-          exit-code: '0'
+          format: "table"
+          exit-code: "0"
