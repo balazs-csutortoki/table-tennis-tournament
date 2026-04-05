@@ -12,7 +12,7 @@
     "deploy": "gh-pages -d build"
   },
   "dependencies": {
-    "ajv": "^8.17.1",
+    "ajv": "^8.18.0",
     "i18next": "^25.0.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
