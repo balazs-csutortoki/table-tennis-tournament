@@ -1,11 +1,8 @@
 name: Build and Push Docker Image
 
+# Project is obsolete: manual-only so no images are published automatically.
 on:
-  push:
-    branches: [main, master, develop]
-    tags: ["v*"]
-  pull_request:
-    branches: [main, master]
+  workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io

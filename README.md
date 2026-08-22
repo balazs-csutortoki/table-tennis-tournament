@@ -1,5 +1,15 @@
 # Table Tennis Tournament Management Application
 
+> [!WARNING]
+> **This project is obsolete and no longer maintained.**
+>
+> The repository is archived and kept for reference only. It receives no
+> updates, no dependency bumps and no security fixes. The GitHub Pages
+> deployment has been removed.
+>
+> Ez a projekt elavult, és a továbbiakban nem karbantartott. A repó csak
+> hivatkozási céllal marad fenn.
+
 Ez a projekt egy asztalitenisz torna menedzsment alkalmazás, amely lehetővé teszi a versenyzők regisztrálását, mérkőzések ütemezését, rangsorok kezelését és adatok exportálását. Az alkalmazás TypeScript-tel készült, és a felhasználói felület magyar nyelven érhető el.
 
 ## Funkciók
